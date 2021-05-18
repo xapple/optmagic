@@ -34,3 +34,7 @@ def test_simple_case():
     output = cmd()
     # Check the result #
     assert output == 'xxxxxxx'
+
+###############################################################################
+if __name__ == '__main__':
+    test_simple_case()
