@@ -26,14 +26,17 @@ file_name = inspect.getframeinfo(inspect.currentframe()).filename
 this_dir  = os.path.dirname(os.path.abspath(file_name)) + '/'
 
 # Create the command #
-cmd = pbs3.Command(this_dir + 'expose_class.py')
+cmd = pbs3.Command(this_dir + 'expose_the_class.py')
 
 ###############################################################################
 def test_simple_case():
     # Call the command #
-    output = cmd()
+    output = cmd('--name=corvette')
+    # What we expect #
+    expected = "This automatic red car is named corvette.\n" \
+               "It can go up to 60 km/h.\n\n"
     # Check the result #
-    assert output == 'xxxxxxx'
+    assert str(output) == expected
 
 ###############################################################################
 if __name__ == '__main__':
