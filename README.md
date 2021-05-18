@@ -36,4 +36,4 @@ More documentation is available at:
 
 This documentation is simply generated with:
 
-    $ pdoc --html --output-dir docs --force optmagic
+    $ pdoc3 --html --output-dir docs --force optmagic
