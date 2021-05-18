@@ -23,5 +23,4 @@ from optmagic import OptMagic
 from simple_car_class import Car
 
 # Apply magic #
-if __name__ == '__main__':
-    OptMagic(Car)()
+if __name__ == '__main__': OptMagic(Car)()
