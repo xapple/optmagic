@@ -11,7 +11,7 @@ It contains functionality which has not yet all been fully documented.
 
 * [argparse](https://docs.python.org/3/library/argparse.html)
 * [invoke](https://www.pyinvoke.org/)
-* [click](https://click.palletsprojects.com/en/8.0.x/)
+* [click](https://click.palletsprojects.com/)
 * [docopt](https://docopt.org/)
 
 ### Why not use one of those?
@@ -26,7 +26,19 @@ TODO
 
 To install the `optmagic` package, simply type the following commands on your terminal:
 
-    $ pip3 install  optmagic
+    $ pip3 install optmagic
+
+## Dependencies
+
+The projects depends on the following module for parsing docstrings:
+
+* `docstring_parser`
+
+If you want to run the test suite for `optmagic` you need the following extra libraries:
+
+* `pytest`
+* `matplotlib`
+* `pbs3`
 
 ## Extra documentation
 
