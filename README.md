@@ -1,6 +1,6 @@
 [![PyPI version](https://badge.fury.io/py/optmagic.svg)](https://badge.fury.io/py/optmagic)
 
-# `optmagic` version 1.0.3
+# `optmagic` version 1.0.4
 
 This project enables you to create simple command line interfaces starting
 with a class, or a function that you want to expose directly to the shell.
