@@ -21,7 +21,7 @@ Contact at www.sinclair.bio" />
 <main>
 <article id="content">
 <header>
-<h1 class="title">Module <code>optmagic</code></h1>
+<h1 class="title">Package <code>optmagic</code></h1>
 </header>
 <section id="section-intro">
 <p>Written by Lucas Sinclair.
@@ -41,18 +41,23 @@ Contact at www.sinclair.bio
 &#34;&#34;&#34;
 
 # Constants #
-__version__ = &#39;1.0.1&#39;
+__version__ = &#39;1.0.2&#39;
 
 # Built-in modules #
-import argparse, types
+import sys, argparse, types, inspect, functools, os.path
+
+# Internal modules #
+from optmagic.argument import Argument
+
+# Third party modules #
+import docstring_parser
 
 ################################################################################
 class OptMagic:
     &#34;&#34;&#34;
     This class enables you to create simple command line interfaces starting
     with a class or a function that you want to expose directly to the shell.
-    See documentation at https://example.com/
-
+    See documentation at https://github.com/xapple/optmagic/
     This project is similar in some ways to https://www.pyinvoke.org/
     &#34;&#34;&#34;
 
@@ -62,46 +67,263 @@ class OptMagic:
 
             function_or_class: You can pass either a class object or a function
                                object as the only parameter to OptMagic.
+
+        Other:
+
+            For debugging you can set the special attribute `optmagic_argv`
+            to a string of your choosing which will cause sys.argv to be
+            ignored.
         &#34;&#34;&#34;
         self.obj = function_or_class
 
-    @property
-    def args(self):
-        &#34;&#34;&#34;
-        Lorem.
-        &#34;&#34;&#34;
-        return []
+    def __repr__(self):
+        &#34;&#34;&#34;A simple representation of this object to avoid memory addresses.&#34;&#34;&#34;
+        return &#34;&lt;%s object on &#39;%s&#39;&gt;&#34; % (self.__class__.__name__, self.obj)
 
-    @property
+    #----------------------------- Properties --------------------------------#
+    @functools.cached_property
+    def type(self):
+        # Determine the type of the attribute #
+        if isinstance(self.obj, type):                 return &#39;class&#39;
+        elif isinstance(self.obj, types.FunctionType): return &#39;function&#39;
+        # Otherwise raise an exception #
+        else:
+            msg = &#34;OptMagic should be called with a function or a class but&#34; \
+                  &#34; not with `%s`.&#34; % self.obj
+            raise ValueError(msg)
+
+    @functools.cached_property
+    def func(self):
+        # If it&#39;s a class we want to target the constructor #
+        if self.type == &#39;class&#39;:    return self.obj.__init__
+        if self.type == &#39;function&#39;: return self.obj
+
+    @functools.cached_property
+    def docstring(self):
+        &#34;&#34;&#34;
+        If you use `inspect.getdoc(self.func)` it returns something slightly
+        different.
+        &#34;&#34;&#34;
+        return self.func.__doc__
+
+    @functools.cached_property
+    def sig(self):
+        return inspect.signature(self.obj)
+
+    @functools.cached_property
+    def sub_docs(self):
+        &#34;&#34;&#34;
+        The `docstring_parser` module is able to parse numpydoc style
+        docstrings amongst others formats.
+        &#34;&#34;&#34;
+        return {param.arg_name: param.description
+                for param in docstring_parser.parse(self.docstring).params}
+
+    @functools.cached_property
+    def arguments(self):
+        # Create all Argument objects #
+        result = [Argument(param.name,
+                         param.default,
+                         self.sub_docs[param.name],
+                         self)
+                  for param in self.sig.parameters.values()]
+        # Return #
+        return result
+
+    #----------------------------- Parameters --------------------------------#
+    @functools.cached_property
+    def child_module(self):
+        &#34;&#34;&#34;The sub-module from which the object is coming from.&#34;&#34;&#34;
+        return inspect.getmodule(self.obj)
+
+    @functools.cached_property
+    def base_module(self):
+        &#34;&#34;&#34;The parent package from which the object is coming from.&#34;&#34;&#34;
+        name = self.child_module.__name__.split(&#39;.&#39;)[0]
+        return __import__(name)
+
+    @functools.cached_property
+    def prog_string(self):
+        &#34;&#34;&#34;
+        This is the name of program that appears at the top of the help string.
+        By default it should be name of the module from which the object comes
+        from.
+        &#34;&#34;&#34;
+        return self.base_module.__name__
+
+    @functools.cached_property
+    def usage_string(self):
+        &#34;&#34;&#34;
+        This is the short description of the program that appears at the very
+        top of the help string and summarizes all options.
+        &#34;&#34;&#34;
+        return None
+
+    @functools.cached_property
+    def epilog_string(self):
+        &#34;&#34;&#34;
+        This is an extra string that appears at the very end of the help
+        message. We want to display the URL to the project page.
+        &#34;&#34;&#34;
+        # Initialize #
+        url = None
+        # Search the child module #
+        if hasattr(self.child_module, &#39;project_url&#39;):
+            url = self.child_module.project_url
+        # Search the parent module #
+        if hasattr(self.base_module, &#39;project_url&#39;):
+            url = self.base_module.project_url
+        # Make the message #
+        if url is not None:
+            msg = &#34;More information at &#34; + url
+            msg = &#39;-&#39;*75 + &#39;\n| &#39; + msg + &#39;\n&#39; + &#39;-&#39;*75
+            # Remove a new line from the last required argument #
+            last_req = [arg for arg in self.arguments if not arg.has_default]
+            if last_req: last_req[-1].help = last_req[-1].help[:-1]
+            # Return #
+            return msg
+
+    @functools.cached_property
+    def title_string(self):
+        &#34;&#34;&#34;
+        A string that appears at the top of the help message.
+        Just after the usage summary.
+        &#34;&#34;&#34;
+        return self.base_module.__doc__
+
+    @functools.cached_property
+    def version_string(self):
+        &#34;&#34;&#34;The string returned when invoked with the &#39;-v&#39; option&#34;&#34;&#34;
+        # Initialize #
+        version = self.prog_string
+        # Search for a version number #
+        if hasattr(self.base_module, &#39;__version__&#39;):
+            version += &#34; version &#34; + self.base_module.__version__
+        elif hasattr(self.child_module, &#39;__version__&#39;):
+            version += &#34; version &#34; + self.base_module.__version__
+        # Return #
+        return version
+
+    #------------------------------- Objects ---------------------------------#
+    @functools.cached_property
+    def options(self):
+        &#34;&#34;&#34;
+        A better formatter class could be constructed based on:
+        https://stackoverflow.com/a/65891304
+        &#34;&#34;&#34;
+        # Formatter #
+        from argparse import RawTextHelpFormatter
+        # Options for the parser #
+        return dict(prog            = self.prog_string,
+                    usage           = self.usage_string,
+                    description     = self.title_string,
+                    epilog          = self.epilog_string,
+                    allow_abbrev    = True,
+                    add_help        = False,
+                    formatter_class = RawTextHelpFormatter)
+
+
+    @functools.cached_property
+    def parser(self):
+        # Create the parser #
+        parser = argparse.ArgumentParser(**self.options)
+        # Capitalize groups #
+        parser._positionals.title = &#39;Positional arguments&#39;
+        parser._optionals.title = &#39;Optional arguments&#39;
+        # Add a special group for required arguments #
+        # See https://stackoverflow.com/questions/24180527
+        if [arg.has_default for arg in self.arguments]:
+            required = parser.add_argument_group(&#39;Required arguments&#39;)
+        else:
+            required = None
+        # Iterate over arguments #
+        for arg in self.arguments: arg.add_arg(parser, required)
+        # Add the version argument #
+        parser.add_argument(&#39;--version&#39;, &#39;-v&#39;, action=&#39;version&#39;,
+                            version=self.version_string,
+                            help=&#34;Show program&#39;s version number and exit.&#34;)
+        # Add the help argument #
+        parser.add_argument(&#39;--help&#39;, &#39;-h&#39;, action=&#39;help&#39;,
+                            default=argparse.SUPPRESS,
+                            help=&#39;Show this help message and exit.&#39;)
+        # Return #
+        return parser
+
+    @functools.cached_property
+    def parsed_args(self):
+        # Check for debug mode #
+        if hasattr(self, &#39;optmagic_argv&#39;):
+            import shlex
+            argument_list = shlex.split(self.optmagic_argv)
+            return self.parser.parse_args(argument_list)
+        # Call the parser #
+        return self.parser.parse_args()
+
+    @functools.cached_property
     def kwargs(self):
-        &#34;&#34;&#34;
-        Lorem.
-        &#34;&#34;&#34;
-        return {}
+        return vars(self.parsed_args)
 
+    #------------------------------- Methods ---------------------------------#
     def __call__(self, *extra_args, **extra_kwargs):
-        &#34;&#34;&#34;
-        Lorem.
-        &#34;&#34;&#34;
         # Call if it&#39;s a function #
-        if isinstance(self.obj, types.FunctionType):
-            self.obj(*self.args, **self.kwargs)
+        if self.type == &#39;function&#39;:
+            return self.func(**self.kwargs)
         # Call if it&#39;s a class #
-        if isinstance(self.obj, type):
-            instance = self.obj(*self.args, **self.kwargs)
-            instance(*extra_args, **extra_kwargs)
+        if self.type == &#39;class&#39;:
+            instance = self.obj(**self.kwargs)
+            return instance(*extra_args, **extra_kwargs)
 
-################################################################################
-class Argument:
+    #------------------------------- Extras ----------------------------------#
+    @functools.cached_property
+    def markdown(self):
+        &#34;&#34;&#34;
+        Return a markdown version of the help string.
+        This actually creates a file somewhere on the filesystem!
+        &#34;&#34;&#34;
+        import argmark
+        return argmark.md_help(self.parser)
 
-    def __init__(self, name):
-        &#34;&#34;&#34;
-        Lorem.
-        &#34;&#34;&#34;
-        self.obj = name</code></pre>
+###############################################################################
+# The code below is used for debugging purposes
+# It uses the test case found in the &#39;test/&#39; directory
+
+# You can call it like this:
+#   $ python3 -m optmagic --name=hello
+# Or via ipython for interactiveness:
+#   $ ipython3 -i -- optmagic.py --name hello
+# Or via the executable:
+#   $ test/expose_the_class.py -n hello --max_speed 130
+# Or inside ipython with these commands:
+#    from optmagic import OptMagic; from simple_car_class import Car;
+#    self = OptMagic(Car); self.optmagic_argv = &#34;--name=hello&#34;; self()
+
+if __name__ == &#39;__main__&#39;:
+    # Get the current directory of this python script #
+    this_file = (inspect.stack()[0])[1]
+    this_dir  = os.path.dirname(this_file)
+    # Get the path of our test class #
+    class_file = this_dir + &#39;/test/simple_car_class.py&#39;
+    # Import it #
+    from importlib.machinery import SourceFileLoader
+    module = SourceFileLoader(&#34;simple_car&#34;, class_file).load_module()
+    # Create an object #
+    self = OptMagic(module.Car)
+    # Forward the arguments #
+    self.optmagic_argv = &#39; &#39;.join(sys.argv[1:])
+    # Call #
+    self()</code></pre>
 </details>
 </section>
 <section>
+<h2 class="section-title" id="header-submodules">Sub-modules</h2>
+<dl>
+<dt><code class="name"><a title="optmagic.argument" href="argument.html">optmagic.argument</a></code></dt>
+<dd>
+<div class="desc"><p>Written by Lucas Sinclair.
+MIT Licensed.
+Contact at www.sinclair.bio</p></div>
+</dd>
+</dl>
 </section>
 <section>
 </section>
@@ -110,25 +332,6 @@ class Argument:
 <section>
 <h2 class="section-title" id="header-classes">Classes</h2>
 <dl>
-<dt id="optmagic.Argument"><code class="flex name class">
-<span>class <span class="ident">Argument</span></span>
-<span>(</span><span>name)</span>
-</code></dt>
-<dd>
-<div class="desc"><p>Lorem.</p></div>
-<details class="source">
-<summary>
-<span>Expand source code</span>
-</summary>
-<pre><code class="python">class Argument:
-
-    def __init__(self, name):
-        &#34;&#34;&#34;
-        Lorem.
-        &#34;&#34;&#34;
-        self.obj = name</code></pre>
-</details>
-</dd>
 <dt id="optmagic.OptMagic"><code class="flex name class">
 <span>class <span class="ident">OptMagic</span></span>
 <span>(</span><span>function_or_class)</span>
@@ -136,14 +339,18 @@ class Argument:
 <dd>
 <div class="desc"><p>This class enables you to create simple command line interfaces starting
 with a class or a function that you want to expose directly to the shell.
-See documentation at <a href="https://example.com/">https://example.com/</a></p>
-<p>This project is similar in some ways to <a href="https://www.pyinvoke.org/">https://www.pyinvoke.org/</a></p>
+See documentation at <a href="https://github.com/xapple/optmagic/">https://github.com/xapple/optmagic/</a>
+This project is similar in some ways to <a href="https://www.pyinvoke.org/">https://www.pyinvoke.org/</a></p>
 <h2 id="args">Args</h2>
 <dl>
 <dt><strong><code>function_or_class</code></strong></dt>
 <dd>You can pass either a class object or a function
 object as the only parameter to OptMagic.</dd>
-</dl></div>
+</dl>
+<h2 id="other">Other</h2>
+<p>For debugging you can set the special attribute <code>optmagic_argv</code>
+to a string of your choosing which will cause sys.argv to be
+ignored.</p></div>
 <details class="source">
 <summary>
 <span>Expand source code</span>
@@ -152,8 +359,7 @@ object as the only parameter to OptMagic.</dd>
     &#34;&#34;&#34;
     This class enables you to create simple command line interfaces starting
     with a class or a function that you want to expose directly to the shell.
-    See documentation at https://example.com/
-
+    See documentation at https://github.com/xapple/optmagic/
     This project is similar in some ways to https://www.pyinvoke.org/
     &#34;&#34;&#34;
 
@@ -163,65 +369,933 @@ object as the only parameter to OptMagic.</dd>
 
             function_or_class: You can pass either a class object or a function
                                object as the only parameter to OptMagic.
+
+        Other:
+
+            For debugging you can set the special attribute `optmagic_argv`
+            to a string of your choosing which will cause sys.argv to be
+            ignored.
         &#34;&#34;&#34;
         self.obj = function_or_class
 
-    @property
-    def args(self):
-        &#34;&#34;&#34;
-        Lorem.
-        &#34;&#34;&#34;
-        return []
+    def __repr__(self):
+        &#34;&#34;&#34;A simple representation of this object to avoid memory addresses.&#34;&#34;&#34;
+        return &#34;&lt;%s object on &#39;%s&#39;&gt;&#34; % (self.__class__.__name__, self.obj)
 
-    @property
+    #----------------------------- Properties --------------------------------#
+    @functools.cached_property
+    def type(self):
+        # Determine the type of the attribute #
+        if isinstance(self.obj, type):                 return &#39;class&#39;
+        elif isinstance(self.obj, types.FunctionType): return &#39;function&#39;
+        # Otherwise raise an exception #
+        else:
+            msg = &#34;OptMagic should be called with a function or a class but&#34; \
+                  &#34; not with `%s`.&#34; % self.obj
+            raise ValueError(msg)
+
+    @functools.cached_property
+    def func(self):
+        # If it&#39;s a class we want to target the constructor #
+        if self.type == &#39;class&#39;:    return self.obj.__init__
+        if self.type == &#39;function&#39;: return self.obj
+
+    @functools.cached_property
+    def docstring(self):
+        &#34;&#34;&#34;
+        If you use `inspect.getdoc(self.func)` it returns something slightly
+        different.
+        &#34;&#34;&#34;
+        return self.func.__doc__
+
+    @functools.cached_property
+    def sig(self):
+        return inspect.signature(self.obj)
+
+    @functools.cached_property
+    def sub_docs(self):
+        &#34;&#34;&#34;
+        The `docstring_parser` module is able to parse numpydoc style
+        docstrings amongst others formats.
+        &#34;&#34;&#34;
+        return {param.arg_name: param.description
+                for param in docstring_parser.parse(self.docstring).params}
+
+    @functools.cached_property
+    def arguments(self):
+        # Create all Argument objects #
+        result = [Argument(param.name,
+                         param.default,
+                         self.sub_docs[param.name],
+                         self)
+                  for param in self.sig.parameters.values()]
+        # Return #
+        return result
+
+    #----------------------------- Parameters --------------------------------#
+    @functools.cached_property
+    def child_module(self):
+        &#34;&#34;&#34;The sub-module from which the object is coming from.&#34;&#34;&#34;
+        return inspect.getmodule(self.obj)
+
+    @functools.cached_property
+    def base_module(self):
+        &#34;&#34;&#34;The parent package from which the object is coming from.&#34;&#34;&#34;
+        name = self.child_module.__name__.split(&#39;.&#39;)[0]
+        return __import__(name)
+
+    @functools.cached_property
+    def prog_string(self):
+        &#34;&#34;&#34;
+        This is the name of program that appears at the top of the help string.
+        By default it should be name of the module from which the object comes
+        from.
+        &#34;&#34;&#34;
+        return self.base_module.__name__
+
+    @functools.cached_property
+    def usage_string(self):
+        &#34;&#34;&#34;
+        This is the short description of the program that appears at the very
+        top of the help string and summarizes all options.
+        &#34;&#34;&#34;
+        return None
+
+    @functools.cached_property
+    def epilog_string(self):
+        &#34;&#34;&#34;
+        This is an extra string that appears at the very end of the help
+        message. We want to display the URL to the project page.
+        &#34;&#34;&#34;
+        # Initialize #
+        url = None
+        # Search the child module #
+        if hasattr(self.child_module, &#39;project_url&#39;):
+            url = self.child_module.project_url
+        # Search the parent module #
+        if hasattr(self.base_module, &#39;project_url&#39;):
+            url = self.base_module.project_url
+        # Make the message #
+        if url is not None:
+            msg = &#34;More information at &#34; + url
+            msg = &#39;-&#39;*75 + &#39;\n| &#39; + msg + &#39;\n&#39; + &#39;-&#39;*75
+            # Remove a new line from the last required argument #
+            last_req = [arg for arg in self.arguments if not arg.has_default]
+            if last_req: last_req[-1].help = last_req[-1].help[:-1]
+            # Return #
+            return msg
+
+    @functools.cached_property
+    def title_string(self):
+        &#34;&#34;&#34;
+        A string that appears at the top of the help message.
+        Just after the usage summary.
+        &#34;&#34;&#34;
+        return self.base_module.__doc__
+
+    @functools.cached_property
+    def version_string(self):
+        &#34;&#34;&#34;The string returned when invoked with the &#39;-v&#39; option&#34;&#34;&#34;
+        # Initialize #
+        version = self.prog_string
+        # Search for a version number #
+        if hasattr(self.base_module, &#39;__version__&#39;):
+            version += &#34; version &#34; + self.base_module.__version__
+        elif hasattr(self.child_module, &#39;__version__&#39;):
+            version += &#34; version &#34; + self.base_module.__version__
+        # Return #
+        return version
+
+    #------------------------------- Objects ---------------------------------#
+    @functools.cached_property
+    def options(self):
+        &#34;&#34;&#34;
+        A better formatter class could be constructed based on:
+        https://stackoverflow.com/a/65891304
+        &#34;&#34;&#34;
+        # Formatter #
+        from argparse import RawTextHelpFormatter
+        # Options for the parser #
+        return dict(prog            = self.prog_string,
+                    usage           = self.usage_string,
+                    description     = self.title_string,
+                    epilog          = self.epilog_string,
+                    allow_abbrev    = True,
+                    add_help        = False,
+                    formatter_class = RawTextHelpFormatter)
+
+
+    @functools.cached_property
+    def parser(self):
+        # Create the parser #
+        parser = argparse.ArgumentParser(**self.options)
+        # Capitalize groups #
+        parser._positionals.title = &#39;Positional arguments&#39;
+        parser._optionals.title = &#39;Optional arguments&#39;
+        # Add a special group for required arguments #
+        # See https://stackoverflow.com/questions/24180527
+        if [arg.has_default for arg in self.arguments]:
+            required = parser.add_argument_group(&#39;Required arguments&#39;)
+        else:
+            required = None
+        # Iterate over arguments #
+        for arg in self.arguments: arg.add_arg(parser, required)
+        # Add the version argument #
+        parser.add_argument(&#39;--version&#39;, &#39;-v&#39;, action=&#39;version&#39;,
+                            version=self.version_string,
+                            help=&#34;Show program&#39;s version number and exit.&#34;)
+        # Add the help argument #
+        parser.add_argument(&#39;--help&#39;, &#39;-h&#39;, action=&#39;help&#39;,
+                            default=argparse.SUPPRESS,
+                            help=&#39;Show this help message and exit.&#39;)
+        # Return #
+        return parser
+
+    @functools.cached_property
+    def parsed_args(self):
+        # Check for debug mode #
+        if hasattr(self, &#39;optmagic_argv&#39;):
+            import shlex
+            argument_list = shlex.split(self.optmagic_argv)
+            return self.parser.parse_args(argument_list)
+        # Call the parser #
+        return self.parser.parse_args()
+
+    @functools.cached_property
     def kwargs(self):
-        &#34;&#34;&#34;
-        Lorem.
-        &#34;&#34;&#34;
-        return {}
+        return vars(self.parsed_args)
 
+    #------------------------------- Methods ---------------------------------#
     def __call__(self, *extra_args, **extra_kwargs):
-        &#34;&#34;&#34;
-        Lorem.
-        &#34;&#34;&#34;
         # Call if it&#39;s a function #
-        if isinstance(self.obj, types.FunctionType):
-            self.obj(*self.args, **self.kwargs)
+        if self.type == &#39;function&#39;:
+            return self.func(**self.kwargs)
         # Call if it&#39;s a class #
-        if isinstance(self.obj, type):
-            instance = self.obj(*self.args, **self.kwargs)
-            instance(*extra_args, **extra_kwargs)</code></pre>
+        if self.type == &#39;class&#39;:
+            instance = self.obj(**self.kwargs)
+            return instance(*extra_args, **extra_kwargs)
+
+    #------------------------------- Extras ----------------------------------#
+    @functools.cached_property
+    def markdown(self):
+        &#34;&#34;&#34;
+        Return a markdown version of the help string.
+        This actually creates a file somewhere on the filesystem!
+        &#34;&#34;&#34;
+        import argmark
+        return argmark.md_help(self.parser)</code></pre>
 </details>
 <h3>Instance variables</h3>
 <dl>
-<dt id="optmagic.OptMagic.args"><code class="name">var <span class="ident">args</span></code></dt>
+<dt id="optmagic.OptMagic.arguments"><code class="name">var <span class="ident">arguments</span></code></dt>
 <dd>
-<div class="desc"><p>Lorem.</p></div>
+<div class="desc"></div>
 <details class="source">
 <summary>
 <span>Expand source code</span>
 </summary>
-<pre><code class="python">@property
-def args(self):
-    &#34;&#34;&#34;
-    Lorem.
-    &#34;&#34;&#34;
-    return []</code></pre>
+<pre><code class="python">def __get__(self, instance, owner=None):
+    if instance is None:
+        return self
+    if self.attrname is None:
+        raise TypeError(
+            &#34;Cannot use cached_property instance without calling __set_name__ on it.&#34;)
+    try:
+        cache = instance.__dict__
+    except AttributeError:  # not all objects have __dict__ (e.g. class defines slots)
+        msg = (
+            f&#34;No &#39;__dict__&#39; attribute on {type(instance).__name__!r} &#34;
+            f&#34;instance to cache {self.attrname!r} property.&#34;
+        )
+        raise TypeError(msg) from None
+    val = cache.get(self.attrname, _NOT_FOUND)
+    if val is _NOT_FOUND:
+        with self.lock:
+            # check if another thread filled cache while we awaited lock
+            val = cache.get(self.attrname, _NOT_FOUND)
+            if val is _NOT_FOUND:
+                val = self.func(instance)
+                try:
+                    cache[self.attrname] = val
+                except TypeError:
+                    msg = (
+                        f&#34;The &#39;__dict__&#39; attribute on {type(instance).__name__!r} instance &#34;
+                        f&#34;does not support item assignment for caching {self.attrname!r} property.&#34;
+                    )
+                    raise TypeError(msg) from None
+    return val</code></pre>
+</details>
+</dd>
+<dt id="optmagic.OptMagic.base_module"><code class="name">var <span class="ident">base_module</span></code></dt>
+<dd>
+<div class="desc"><p>The parent package from which the object is coming from.</p></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">def __get__(self, instance, owner=None):
+    if instance is None:
+        return self
+    if self.attrname is None:
+        raise TypeError(
+            &#34;Cannot use cached_property instance without calling __set_name__ on it.&#34;)
+    try:
+        cache = instance.__dict__
+    except AttributeError:  # not all objects have __dict__ (e.g. class defines slots)
+        msg = (
+            f&#34;No &#39;__dict__&#39; attribute on {type(instance).__name__!r} &#34;
+            f&#34;instance to cache {self.attrname!r} property.&#34;
+        )
+        raise TypeError(msg) from None
+    val = cache.get(self.attrname, _NOT_FOUND)
+    if val is _NOT_FOUND:
+        with self.lock:
+            # check if another thread filled cache while we awaited lock
+            val = cache.get(self.attrname, _NOT_FOUND)
+            if val is _NOT_FOUND:
+                val = self.func(instance)
+                try:
+                    cache[self.attrname] = val
+                except TypeError:
+                    msg = (
+                        f&#34;The &#39;__dict__&#39; attribute on {type(instance).__name__!r} instance &#34;
+                        f&#34;does not support item assignment for caching {self.attrname!r} property.&#34;
+                    )
+                    raise TypeError(msg) from None
+    return val</code></pre>
+</details>
+</dd>
+<dt id="optmagic.OptMagic.child_module"><code class="name">var <span class="ident">child_module</span></code></dt>
+<dd>
+<div class="desc"><p>The sub-module from which the object is coming from.</p></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">def __get__(self, instance, owner=None):
+    if instance is None:
+        return self
+    if self.attrname is None:
+        raise TypeError(
+            &#34;Cannot use cached_property instance without calling __set_name__ on it.&#34;)
+    try:
+        cache = instance.__dict__
+    except AttributeError:  # not all objects have __dict__ (e.g. class defines slots)
+        msg = (
+            f&#34;No &#39;__dict__&#39; attribute on {type(instance).__name__!r} &#34;
+            f&#34;instance to cache {self.attrname!r} property.&#34;
+        )
+        raise TypeError(msg) from None
+    val = cache.get(self.attrname, _NOT_FOUND)
+    if val is _NOT_FOUND:
+        with self.lock:
+            # check if another thread filled cache while we awaited lock
+            val = cache.get(self.attrname, _NOT_FOUND)
+            if val is _NOT_FOUND:
+                val = self.func(instance)
+                try:
+                    cache[self.attrname] = val
+                except TypeError:
+                    msg = (
+                        f&#34;The &#39;__dict__&#39; attribute on {type(instance).__name__!r} instance &#34;
+                        f&#34;does not support item assignment for caching {self.attrname!r} property.&#34;
+                    )
+                    raise TypeError(msg) from None
+    return val</code></pre>
+</details>
+</dd>
+<dt id="optmagic.OptMagic.docstring"><code class="name">var <span class="ident">docstring</span></code></dt>
+<dd>
+<div class="desc"><p>If you use <code>inspect.getdoc(self.func)</code> it returns something slightly
+different.</p></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">def __get__(self, instance, owner=None):
+    if instance is None:
+        return self
+    if self.attrname is None:
+        raise TypeError(
+            &#34;Cannot use cached_property instance without calling __set_name__ on it.&#34;)
+    try:
+        cache = instance.__dict__
+    except AttributeError:  # not all objects have __dict__ (e.g. class defines slots)
+        msg = (
+            f&#34;No &#39;__dict__&#39; attribute on {type(instance).__name__!r} &#34;
+            f&#34;instance to cache {self.attrname!r} property.&#34;
+        )
+        raise TypeError(msg) from None
+    val = cache.get(self.attrname, _NOT_FOUND)
+    if val is _NOT_FOUND:
+        with self.lock:
+            # check if another thread filled cache while we awaited lock
+            val = cache.get(self.attrname, _NOT_FOUND)
+            if val is _NOT_FOUND:
+                val = self.func(instance)
+                try:
+                    cache[self.attrname] = val
+                except TypeError:
+                    msg = (
+                        f&#34;The &#39;__dict__&#39; attribute on {type(instance).__name__!r} instance &#34;
+                        f&#34;does not support item assignment for caching {self.attrname!r} property.&#34;
+                    )
+                    raise TypeError(msg) from None
+    return val</code></pre>
+</details>
+</dd>
+<dt id="optmagic.OptMagic.epilog_string"><code class="name">var <span class="ident">epilog_string</span></code></dt>
+<dd>
+<div class="desc"><p>This is an extra string that appears at the very end of the help
+message. We want to display the URL to the project page.</p></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">def __get__(self, instance, owner=None):
+    if instance is None:
+        return self
+    if self.attrname is None:
+        raise TypeError(
+            &#34;Cannot use cached_property instance without calling __set_name__ on it.&#34;)
+    try:
+        cache = instance.__dict__
+    except AttributeError:  # not all objects have __dict__ (e.g. class defines slots)
+        msg = (
+            f&#34;No &#39;__dict__&#39; attribute on {type(instance).__name__!r} &#34;
+            f&#34;instance to cache {self.attrname!r} property.&#34;
+        )
+        raise TypeError(msg) from None
+    val = cache.get(self.attrname, _NOT_FOUND)
+    if val is _NOT_FOUND:
+        with self.lock:
+            # check if another thread filled cache while we awaited lock
+            val = cache.get(self.attrname, _NOT_FOUND)
+            if val is _NOT_FOUND:
+                val = self.func(instance)
+                try:
+                    cache[self.attrname] = val
+                except TypeError:
+                    msg = (
+                        f&#34;The &#39;__dict__&#39; attribute on {type(instance).__name__!r} instance &#34;
+                        f&#34;does not support item assignment for caching {self.attrname!r} property.&#34;
+                    )
+                    raise TypeError(msg) from None
+    return val</code></pre>
+</details>
+</dd>
+<dt id="optmagic.OptMagic.func"><code class="name">var <span class="ident">func</span></code></dt>
+<dd>
+<div class="desc"></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">def __get__(self, instance, owner=None):
+    if instance is None:
+        return self
+    if self.attrname is None:
+        raise TypeError(
+            &#34;Cannot use cached_property instance without calling __set_name__ on it.&#34;)
+    try:
+        cache = instance.__dict__
+    except AttributeError:  # not all objects have __dict__ (e.g. class defines slots)
+        msg = (
+            f&#34;No &#39;__dict__&#39; attribute on {type(instance).__name__!r} &#34;
+            f&#34;instance to cache {self.attrname!r} property.&#34;
+        )
+        raise TypeError(msg) from None
+    val = cache.get(self.attrname, _NOT_FOUND)
+    if val is _NOT_FOUND:
+        with self.lock:
+            # check if another thread filled cache while we awaited lock
+            val = cache.get(self.attrname, _NOT_FOUND)
+            if val is _NOT_FOUND:
+                val = self.func(instance)
+                try:
+                    cache[self.attrname] = val
+                except TypeError:
+                    msg = (
+                        f&#34;The &#39;__dict__&#39; attribute on {type(instance).__name__!r} instance &#34;
+                        f&#34;does not support item assignment for caching {self.attrname!r} property.&#34;
+                    )
+                    raise TypeError(msg) from None
+    return val</code></pre>
 </details>
 </dd>
 <dt id="optmagic.OptMagic.kwargs"><code class="name">var <span class="ident">kwargs</span></code></dt>
 <dd>
-<div class="desc"><p>Lorem.</p></div>
+<div class="desc"></div>
 <details class="source">
 <summary>
 <span>Expand source code</span>
 </summary>
-<pre><code class="python">@property
-def kwargs(self):
-    &#34;&#34;&#34;
-    Lorem.
-    &#34;&#34;&#34;
-    return {}</code></pre>
+<pre><code class="python">def __get__(self, instance, owner=None):
+    if instance is None:
+        return self
+    if self.attrname is None:
+        raise TypeError(
+            &#34;Cannot use cached_property instance without calling __set_name__ on it.&#34;)
+    try:
+        cache = instance.__dict__
+    except AttributeError:  # not all objects have __dict__ (e.g. class defines slots)
+        msg = (
+            f&#34;No &#39;__dict__&#39; attribute on {type(instance).__name__!r} &#34;
+            f&#34;instance to cache {self.attrname!r} property.&#34;
+        )
+        raise TypeError(msg) from None
+    val = cache.get(self.attrname, _NOT_FOUND)
+    if val is _NOT_FOUND:
+        with self.lock:
+            # check if another thread filled cache while we awaited lock
+            val = cache.get(self.attrname, _NOT_FOUND)
+            if val is _NOT_FOUND:
+                val = self.func(instance)
+                try:
+                    cache[self.attrname] = val
+                except TypeError:
+                    msg = (
+                        f&#34;The &#39;__dict__&#39; attribute on {type(instance).__name__!r} instance &#34;
+                        f&#34;does not support item assignment for caching {self.attrname!r} property.&#34;
+                    )
+                    raise TypeError(msg) from None
+    return val</code></pre>
+</details>
+</dd>
+<dt id="optmagic.OptMagic.markdown"><code class="name">var <span class="ident">markdown</span></code></dt>
+<dd>
+<div class="desc"><p>Return a markdown version of the help string.
+This actually creates a file somewhere on the filesystem!</p></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">def __get__(self, instance, owner=None):
+    if instance is None:
+        return self
+    if self.attrname is None:
+        raise TypeError(
+            &#34;Cannot use cached_property instance without calling __set_name__ on it.&#34;)
+    try:
+        cache = instance.__dict__
+    except AttributeError:  # not all objects have __dict__ (e.g. class defines slots)
+        msg = (
+            f&#34;No &#39;__dict__&#39; attribute on {type(instance).__name__!r} &#34;
+            f&#34;instance to cache {self.attrname!r} property.&#34;
+        )
+        raise TypeError(msg) from None
+    val = cache.get(self.attrname, _NOT_FOUND)
+    if val is _NOT_FOUND:
+        with self.lock:
+            # check if another thread filled cache while we awaited lock
+            val = cache.get(self.attrname, _NOT_FOUND)
+            if val is _NOT_FOUND:
+                val = self.func(instance)
+                try:
+                    cache[self.attrname] = val
+                except TypeError:
+                    msg = (
+                        f&#34;The &#39;__dict__&#39; attribute on {type(instance).__name__!r} instance &#34;
+                        f&#34;does not support item assignment for caching {self.attrname!r} property.&#34;
+                    )
+                    raise TypeError(msg) from None
+    return val</code></pre>
+</details>
+</dd>
+<dt id="optmagic.OptMagic.options"><code class="name">var <span class="ident">options</span></code></dt>
+<dd>
+<div class="desc"><p>A better formatter class could be constructed based on:
+<a href="https://stackoverflow.com/a/65891304">https://stackoverflow.com/a/65891304</a></p></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">def __get__(self, instance, owner=None):
+    if instance is None:
+        return self
+    if self.attrname is None:
+        raise TypeError(
+            &#34;Cannot use cached_property instance without calling __set_name__ on it.&#34;)
+    try:
+        cache = instance.__dict__
+    except AttributeError:  # not all objects have __dict__ (e.g. class defines slots)
+        msg = (
+            f&#34;No &#39;__dict__&#39; attribute on {type(instance).__name__!r} &#34;
+            f&#34;instance to cache {self.attrname!r} property.&#34;
+        )
+        raise TypeError(msg) from None
+    val = cache.get(self.attrname, _NOT_FOUND)
+    if val is _NOT_FOUND:
+        with self.lock:
+            # check if another thread filled cache while we awaited lock
+            val = cache.get(self.attrname, _NOT_FOUND)
+            if val is _NOT_FOUND:
+                val = self.func(instance)
+                try:
+                    cache[self.attrname] = val
+                except TypeError:
+                    msg = (
+                        f&#34;The &#39;__dict__&#39; attribute on {type(instance).__name__!r} instance &#34;
+                        f&#34;does not support item assignment for caching {self.attrname!r} property.&#34;
+                    )
+                    raise TypeError(msg) from None
+    return val</code></pre>
+</details>
+</dd>
+<dt id="optmagic.OptMagic.parsed_args"><code class="name">var <span class="ident">parsed_args</span></code></dt>
+<dd>
+<div class="desc"></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">def __get__(self, instance, owner=None):
+    if instance is None:
+        return self
+    if self.attrname is None:
+        raise TypeError(
+            &#34;Cannot use cached_property instance without calling __set_name__ on it.&#34;)
+    try:
+        cache = instance.__dict__
+    except AttributeError:  # not all objects have __dict__ (e.g. class defines slots)
+        msg = (
+            f&#34;No &#39;__dict__&#39; attribute on {type(instance).__name__!r} &#34;
+            f&#34;instance to cache {self.attrname!r} property.&#34;
+        )
+        raise TypeError(msg) from None
+    val = cache.get(self.attrname, _NOT_FOUND)
+    if val is _NOT_FOUND:
+        with self.lock:
+            # check if another thread filled cache while we awaited lock
+            val = cache.get(self.attrname, _NOT_FOUND)
+            if val is _NOT_FOUND:
+                val = self.func(instance)
+                try:
+                    cache[self.attrname] = val
+                except TypeError:
+                    msg = (
+                        f&#34;The &#39;__dict__&#39; attribute on {type(instance).__name__!r} instance &#34;
+                        f&#34;does not support item assignment for caching {self.attrname!r} property.&#34;
+                    )
+                    raise TypeError(msg) from None
+    return val</code></pre>
+</details>
+</dd>
+<dt id="optmagic.OptMagic.parser"><code class="name">var <span class="ident">parser</span></code></dt>
+<dd>
+<div class="desc"></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">def __get__(self, instance, owner=None):
+    if instance is None:
+        return self
+    if self.attrname is None:
+        raise TypeError(
+            &#34;Cannot use cached_property instance without calling __set_name__ on it.&#34;)
+    try:
+        cache = instance.__dict__
+    except AttributeError:  # not all objects have __dict__ (e.g. class defines slots)
+        msg = (
+            f&#34;No &#39;__dict__&#39; attribute on {type(instance).__name__!r} &#34;
+            f&#34;instance to cache {self.attrname!r} property.&#34;
+        )
+        raise TypeError(msg) from None
+    val = cache.get(self.attrname, _NOT_FOUND)
+    if val is _NOT_FOUND:
+        with self.lock:
+            # check if another thread filled cache while we awaited lock
+            val = cache.get(self.attrname, _NOT_FOUND)
+            if val is _NOT_FOUND:
+                val = self.func(instance)
+                try:
+                    cache[self.attrname] = val
+                except TypeError:
+                    msg = (
+                        f&#34;The &#39;__dict__&#39; attribute on {type(instance).__name__!r} instance &#34;
+                        f&#34;does not support item assignment for caching {self.attrname!r} property.&#34;
+                    )
+                    raise TypeError(msg) from None
+    return val</code></pre>
+</details>
+</dd>
+<dt id="optmagic.OptMagic.prog_string"><code class="name">var <span class="ident">prog_string</span></code></dt>
+<dd>
+<div class="desc"><p>This is the name of program that appears at the top of the help string.
+By default it should be name of the module from which the object comes
+from.</p></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">def __get__(self, instance, owner=None):
+    if instance is None:
+        return self
+    if self.attrname is None:
+        raise TypeError(
+            &#34;Cannot use cached_property instance without calling __set_name__ on it.&#34;)
+    try:
+        cache = instance.__dict__
+    except AttributeError:  # not all objects have __dict__ (e.g. class defines slots)
+        msg = (
+            f&#34;No &#39;__dict__&#39; attribute on {type(instance).__name__!r} &#34;
+            f&#34;instance to cache {self.attrname!r} property.&#34;
+        )
+        raise TypeError(msg) from None
+    val = cache.get(self.attrname, _NOT_FOUND)
+    if val is _NOT_FOUND:
+        with self.lock:
+            # check if another thread filled cache while we awaited lock
+            val = cache.get(self.attrname, _NOT_FOUND)
+            if val is _NOT_FOUND:
+                val = self.func(instance)
+                try:
+                    cache[self.attrname] = val
+                except TypeError:
+                    msg = (
+                        f&#34;The &#39;__dict__&#39; attribute on {type(instance).__name__!r} instance &#34;
+                        f&#34;does not support item assignment for caching {self.attrname!r} property.&#34;
+                    )
+                    raise TypeError(msg) from None
+    return val</code></pre>
+</details>
+</dd>
+<dt id="optmagic.OptMagic.sig"><code class="name">var <span class="ident">sig</span></code></dt>
+<dd>
+<div class="desc"></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">def __get__(self, instance, owner=None):
+    if instance is None:
+        return self
+    if self.attrname is None:
+        raise TypeError(
+            &#34;Cannot use cached_property instance without calling __set_name__ on it.&#34;)
+    try:
+        cache = instance.__dict__
+    except AttributeError:  # not all objects have __dict__ (e.g. class defines slots)
+        msg = (
+            f&#34;No &#39;__dict__&#39; attribute on {type(instance).__name__!r} &#34;
+            f&#34;instance to cache {self.attrname!r} property.&#34;
+        )
+        raise TypeError(msg) from None
+    val = cache.get(self.attrname, _NOT_FOUND)
+    if val is _NOT_FOUND:
+        with self.lock:
+            # check if another thread filled cache while we awaited lock
+            val = cache.get(self.attrname, _NOT_FOUND)
+            if val is _NOT_FOUND:
+                val = self.func(instance)
+                try:
+                    cache[self.attrname] = val
+                except TypeError:
+                    msg = (
+                        f&#34;The &#39;__dict__&#39; attribute on {type(instance).__name__!r} instance &#34;
+                        f&#34;does not support item assignment for caching {self.attrname!r} property.&#34;
+                    )
+                    raise TypeError(msg) from None
+    return val</code></pre>
+</details>
+</dd>
+<dt id="optmagic.OptMagic.sub_docs"><code class="name">var <span class="ident">sub_docs</span></code></dt>
+<dd>
+<div class="desc"><p>The <code>docstring_parser</code> module is able to parse numpydoc style
+docstrings amongst others formats.</p></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">def __get__(self, instance, owner=None):
+    if instance is None:
+        return self
+    if self.attrname is None:
+        raise TypeError(
+            &#34;Cannot use cached_property instance without calling __set_name__ on it.&#34;)
+    try:
+        cache = instance.__dict__
+    except AttributeError:  # not all objects have __dict__ (e.g. class defines slots)
+        msg = (
+            f&#34;No &#39;__dict__&#39; attribute on {type(instance).__name__!r} &#34;
+            f&#34;instance to cache {self.attrname!r} property.&#34;
+        )
+        raise TypeError(msg) from None
+    val = cache.get(self.attrname, _NOT_FOUND)
+    if val is _NOT_FOUND:
+        with self.lock:
+            # check if another thread filled cache while we awaited lock
+            val = cache.get(self.attrname, _NOT_FOUND)
+            if val is _NOT_FOUND:
+                val = self.func(instance)
+                try:
+                    cache[self.attrname] = val
+                except TypeError:
+                    msg = (
+                        f&#34;The &#39;__dict__&#39; attribute on {type(instance).__name__!r} instance &#34;
+                        f&#34;does not support item assignment for caching {self.attrname!r} property.&#34;
+                    )
+                    raise TypeError(msg) from None
+    return val</code></pre>
+</details>
+</dd>
+<dt id="optmagic.OptMagic.title_string"><code class="name">var <span class="ident">title_string</span></code></dt>
+<dd>
+<div class="desc"><p>A string that appears at the top of the help message.
+Just after the usage summary.</p></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">def __get__(self, instance, owner=None):
+    if instance is None:
+        return self
+    if self.attrname is None:
+        raise TypeError(
+            &#34;Cannot use cached_property instance without calling __set_name__ on it.&#34;)
+    try:
+        cache = instance.__dict__
+    except AttributeError:  # not all objects have __dict__ (e.g. class defines slots)
+        msg = (
+            f&#34;No &#39;__dict__&#39; attribute on {type(instance).__name__!r} &#34;
+            f&#34;instance to cache {self.attrname!r} property.&#34;
+        )
+        raise TypeError(msg) from None
+    val = cache.get(self.attrname, _NOT_FOUND)
+    if val is _NOT_FOUND:
+        with self.lock:
+            # check if another thread filled cache while we awaited lock
+            val = cache.get(self.attrname, _NOT_FOUND)
+            if val is _NOT_FOUND:
+                val = self.func(instance)
+                try:
+                    cache[self.attrname] = val
+                except TypeError:
+                    msg = (
+                        f&#34;The &#39;__dict__&#39; attribute on {type(instance).__name__!r} instance &#34;
+                        f&#34;does not support item assignment for caching {self.attrname!r} property.&#34;
+                    )
+                    raise TypeError(msg) from None
+    return val</code></pre>
+</details>
+</dd>
+<dt id="optmagic.OptMagic.type"><code class="name">var <span class="ident">type</span></code></dt>
+<dd>
+<div class="desc"></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">def __get__(self, instance, owner=None):
+    if instance is None:
+        return self
+    if self.attrname is None:
+        raise TypeError(
+            &#34;Cannot use cached_property instance without calling __set_name__ on it.&#34;)
+    try:
+        cache = instance.__dict__
+    except AttributeError:  # not all objects have __dict__ (e.g. class defines slots)
+        msg = (
+            f&#34;No &#39;__dict__&#39; attribute on {type(instance).__name__!r} &#34;
+            f&#34;instance to cache {self.attrname!r} property.&#34;
+        )
+        raise TypeError(msg) from None
+    val = cache.get(self.attrname, _NOT_FOUND)
+    if val is _NOT_FOUND:
+        with self.lock:
+            # check if another thread filled cache while we awaited lock
+            val = cache.get(self.attrname, _NOT_FOUND)
+            if val is _NOT_FOUND:
+                val = self.func(instance)
+                try:
+                    cache[self.attrname] = val
+                except TypeError:
+                    msg = (
+                        f&#34;The &#39;__dict__&#39; attribute on {type(instance).__name__!r} instance &#34;
+                        f&#34;does not support item assignment for caching {self.attrname!r} property.&#34;
+                    )
+                    raise TypeError(msg) from None
+    return val</code></pre>
+</details>
+</dd>
+<dt id="optmagic.OptMagic.usage_string"><code class="name">var <span class="ident">usage_string</span></code></dt>
+<dd>
+<div class="desc"><p>This is the short description of the program that appears at the very
+top of the help string and summarizes all options.</p></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">def __get__(self, instance, owner=None):
+    if instance is None:
+        return self
+    if self.attrname is None:
+        raise TypeError(
+            &#34;Cannot use cached_property instance without calling __set_name__ on it.&#34;)
+    try:
+        cache = instance.__dict__
+    except AttributeError:  # not all objects have __dict__ (e.g. class defines slots)
+        msg = (
+            f&#34;No &#39;__dict__&#39; attribute on {type(instance).__name__!r} &#34;
+            f&#34;instance to cache {self.attrname!r} property.&#34;
+        )
+        raise TypeError(msg) from None
+    val = cache.get(self.attrname, _NOT_FOUND)
+    if val is _NOT_FOUND:
+        with self.lock:
+            # check if another thread filled cache while we awaited lock
+            val = cache.get(self.attrname, _NOT_FOUND)
+            if val is _NOT_FOUND:
+                val = self.func(instance)
+                try:
+                    cache[self.attrname] = val
+                except TypeError:
+                    msg = (
+                        f&#34;The &#39;__dict__&#39; attribute on {type(instance).__name__!r} instance &#34;
+                        f&#34;does not support item assignment for caching {self.attrname!r} property.&#34;
+                    )
+                    raise TypeError(msg) from None
+    return val</code></pre>
+</details>
+</dd>
+<dt id="optmagic.OptMagic.version_string"><code class="name">var <span class="ident">version_string</span></code></dt>
+<dd>
+<div class="desc"><p>The string returned when invoked with the '-v' option</p></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">def __get__(self, instance, owner=None):
+    if instance is None:
+        return self
+    if self.attrname is None:
+        raise TypeError(
+            &#34;Cannot use cached_property instance without calling __set_name__ on it.&#34;)
+    try:
+        cache = instance.__dict__
+    except AttributeError:  # not all objects have __dict__ (e.g. class defines slots)
+        msg = (
+            f&#34;No &#39;__dict__&#39; attribute on {type(instance).__name__!r} &#34;
+            f&#34;instance to cache {self.attrname!r} property.&#34;
+        )
+        raise TypeError(msg) from None
+    val = cache.get(self.attrname, _NOT_FOUND)
+    if val is _NOT_FOUND:
+        with self.lock:
+            # check if another thread filled cache while we awaited lock
+            val = cache.get(self.attrname, _NOT_FOUND)
+            if val is _NOT_FOUND:
+                val = self.func(instance)
+                try:
+                    cache[self.attrname] = val
+                except TypeError:
+                    msg = (
+                        f&#34;The &#39;__dict__&#39; attribute on {type(instance).__name__!r} instance &#34;
+                        f&#34;does not support item assignment for caching {self.attrname!r} property.&#34;
+                    )
+                    raise TypeError(msg) from None
+    return val</code></pre>
 </details>
 </dd>
 </dl>
@@ -235,16 +1309,34 @@ def kwargs(self):
 <ul></ul>
 </div>
 <ul id="index">
+<li><h3><a href="#header-submodules">Sub-modules</a></h3>
+<ul>
+<li><code><a title="optmagic.argument" href="argument.html">optmagic.argument</a></code></li>
+</ul>
+</li>
 <li><h3><a href="#header-classes">Classes</a></h3>
 <ul>
 <li>
-<h4><code><a title="optmagic.Argument" href="#optmagic.Argument">Argument</a></code></h4>
-</li>
-<li>
 <h4><code><a title="optmagic.OptMagic" href="#optmagic.OptMagic">OptMagic</a></code></h4>
-<ul class="">
-<li><code><a title="optmagic.OptMagic.args" href="#optmagic.OptMagic.args">args</a></code></li>
+<ul class="two-column">
+<li><code><a title="optmagic.OptMagic.arguments" href="#optmagic.OptMagic.arguments">arguments</a></code></li>
+<li><code><a title="optmagic.OptMagic.base_module" href="#optmagic.OptMagic.base_module">base_module</a></code></li>
+<li><code><a title="optmagic.OptMagic.child_module" href="#optmagic.OptMagic.child_module">child_module</a></code></li>
+<li><code><a title="optmagic.OptMagic.docstring" href="#optmagic.OptMagic.docstring">docstring</a></code></li>
+<li><code><a title="optmagic.OptMagic.epilog_string" href="#optmagic.OptMagic.epilog_string">epilog_string</a></code></li>
+<li><code><a title="optmagic.OptMagic.func" href="#optmagic.OptMagic.func">func</a></code></li>
 <li><code><a title="optmagic.OptMagic.kwargs" href="#optmagic.OptMagic.kwargs">kwargs</a></code></li>
+<li><code><a title="optmagic.OptMagic.markdown" href="#optmagic.OptMagic.markdown">markdown</a></code></li>
+<li><code><a title="optmagic.OptMagic.options" href="#optmagic.OptMagic.options">options</a></code></li>
+<li><code><a title="optmagic.OptMagic.parsed_args" href="#optmagic.OptMagic.parsed_args">parsed_args</a></code></li>
+<li><code><a title="optmagic.OptMagic.parser" href="#optmagic.OptMagic.parser">parser</a></code></li>
+<li><code><a title="optmagic.OptMagic.prog_string" href="#optmagic.OptMagic.prog_string">prog_string</a></code></li>
+<li><code><a title="optmagic.OptMagic.sig" href="#optmagic.OptMagic.sig">sig</a></code></li>
+<li><code><a title="optmagic.OptMagic.sub_docs" href="#optmagic.OptMagic.sub_docs">sub_docs</a></code></li>
+<li><code><a title="optmagic.OptMagic.title_string" href="#optmagic.OptMagic.title_string">title_string</a></code></li>
+<li><code><a title="optmagic.OptMagic.type" href="#optmagic.OptMagic.type">type</a></code></li>
+<li><code><a title="optmagic.OptMagic.usage_string" href="#optmagic.OptMagic.usage_string">usage_string</a></code></li>
+<li><code><a title="optmagic.OptMagic.version_string" href="#optmagic.OptMagic.version_string">version_string</a></code></li>
 </ul>
 </li>
 </ul>
