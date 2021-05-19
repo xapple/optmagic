@@ -15,12 +15,17 @@ Contact at www.sinclair.bio
 # Built-in modules #
 import os
 
+# Constants #
+project_url = 'https://github.com/xapple/optmagic'
+
 ###############################################################################
 class Car:
     """
     A simple car that has a name, a color, is automatic or manual and can be
     a convertible. In addition it has a maximum speed, and can take the path
-    to a file to represent the registration document.
+    to a file to represent the registration document. Optionally, the car
+    can have a left-sided configuration for countries that drive on the other
+    side of the road.
     """
 
     def __init__(self,
@@ -30,6 +35,7 @@ class Car:
                  convertible  = None,
                  max_speed    = 60,
                  registration = None,
+                 sided        = 'right',
                  ):
         """
         Args:
@@ -38,13 +44,18 @@ class Car:
 
             color: Lorem.
 
-            automatic: Lorem.
+            automatic: Determines if the car is automatic or not. This option
+                       can be either 'True' or 'False'.
 
             convertible: Lorem.
 
             max_speed: Lorem.
 
             registration: Lorem.
+
+            sided: The side of the road on which the car is supposed to drive.
+                   Either 'left' or 'right'. No other options are supported.
+                   By default 'right'.
         """
         # Save attributes #
         self.name         = name
@@ -53,6 +64,7 @@ class Car:
         self.convertible  = convertible
         self.max_speed    = max_speed
         self.registration = registration
+        self.sided        = sided
         # Assign default values and change others #
         self.transform()
         # Validate attributes #
@@ -100,6 +112,10 @@ class Car:
             if not os.path.exists(self.registration):
                 msg = "The file located at '%s' does not exist."
                 raise ValueError(msg % self.registration)
+        # Check the side #
+        if self.sided not in ['left', 'right']:
+            msg = "The sideness of the car is not 'right' or 'left'."
+            raise Exception(msg)
 
     def __repr__(self):
         return "<%s object '%s'>" % (self.__class__.__name__, self.name)
@@ -116,6 +132,9 @@ class Car:
         # Third line #
         if self.registration:
             msg += f"The registration is available at '{self.registration}'.\n"
+        # Fourth line #
+        if self.sided == 'left':
+            msg += "It drives on the left side of the road.\n"
         # Return #
         return msg
 
