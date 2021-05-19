@@ -1,3 +1,12 @@
+#!/usr/bin/env python3
+# -*- coding: utf-8 -*-
+
+"""
+Written by Lucas Sinclair.
+GNUv3 Licensed.
+Contact at www.sinclair.bio
+"""
+
 # Imports #
 from setuptools import setup, find_namespace_packages
 from os import path
@@ -19,6 +28,7 @@ setup(
     author_email     = 'lucas.sinclair@me.com',
     packages         = find_namespace_packages(),
     install_requires = ['docstring_parser'],
+    python_requires  = ">=3.6",
     long_description = readme,
     long_description_content_type = 'text/markdown',
     include_package_data = True,
