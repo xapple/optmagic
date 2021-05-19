@@ -15,11 +15,12 @@ import sys, argparse, types, inspect, functools, os.path
 
 # Internal modules #
 from optmagic.argument import Argument
+from optmagic.pytest_action import PytestAction
 
 # Third party modules #
 import docstring_parser
 
-################################################################################
+###############################################################################
 class OptMagic:
     """
     This class enables you to create simple command line interfaces starting
@@ -110,6 +111,11 @@ class OptMagic:
         return __import__(name)
 
     @functools.cached_property
+    def base_path(self):
+        """The location of the package on the filesystem."""
+        return os.path.dirname(inspect.getfile(self.base_module)) + '/'
+
+    @functools.cached_property
     def prog_string(self):
         """
         This is the name of program that appears at the top of the help string.
@@ -189,7 +195,6 @@ class OptMagic:
                     add_help        = False,
                     formatter_class = RawTextHelpFormatter)
 
-
     @functools.cached_property
     def parser(self):
         # Create the parser #
@@ -213,6 +218,10 @@ class OptMagic:
         parser.add_argument('--help', '-h', action='help',
                             default=argparse.SUPPRESS,
                             help='Show this help message and exit.')
+        # Add the pytest argument #
+        parser.add_argument('--pytest', action=PytestAction,
+                            help='Run the test suite and exit.',
+                            default=self.base_path)
         # Return #
         return parser
 
