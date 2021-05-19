@@ -10,7 +10,7 @@ Contact at www.sinclair.bio
 # Built-in modules #
 import inspect, functools, re
 
-################################################################################
+###############################################################################
 class Argument:
 
     def __init__(self, name, default, desc, optmagic):
