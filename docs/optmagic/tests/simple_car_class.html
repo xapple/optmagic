@@ -1,0 +1,456 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, minimum-scale=1" />
+<meta name="generator" content="pdoc 0.9.2" />
+<title>optmagic.tests.simple_car_class API documentation</title>
+<meta name="description" content="Script to test the functionality of the `optmagic` module …" />
+<link rel="preload stylesheet" as="style" href="https://cdnjs.cloudflare.com/ajax/libs/10up-sanitize.css/11.0.1/sanitize.min.css" integrity="sha256-PK9q560IAAa6WVRRh76LtCaI8pjTJ2z11v0miyNNjrs=" crossorigin>
+<link rel="preload stylesheet" as="style" href="https://cdnjs.cloudflare.com/ajax/libs/10up-sanitize.css/11.0.1/typography.min.css" integrity="sha256-7l/o7C8jubJiy74VsKTidCy1yBkRtiUGbVkYBylBqUg=" crossorigin>
+<link rel="stylesheet preload" as="style" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/10.1.1/styles/github.min.css" crossorigin>
+<style>:root{--highlight-color:#fe9}.flex{display:flex !important}body{line-height:1.5em}#content{padding:20px}#sidebar{padding:30px;overflow:hidden}#sidebar > *:last-child{margin-bottom:2cm}.http-server-breadcrumbs{font-size:130%;margin:0 0 15px 0}#footer{font-size:.75em;padding:5px 30px;border-top:1px solid #ddd;text-align:right}#footer p{margin:0 0 0 1em;display:inline-block}#footer p:last-child{margin-right:30px}h1,h2,h3,h4,h5{font-weight:300}h1{font-size:2.5em;line-height:1.1em}h2{font-size:1.75em;margin:1em 0 .50em 0}h3{font-size:1.4em;margin:25px 0 10px 0}h4{margin:0;font-size:105%}h1:target,h2:target,h3:target,h4:target,h5:target,h6:target{background:var(--highlight-color);padding:.2em 0}a{color:#058;text-decoration:none;transition:color .3s ease-in-out}a:hover{color:#e82}.title code{font-weight:bold}h2[id^="header-"]{margin-top:2em}.ident{color:#900}pre code{background:#f8f8f8;font-size:.8em;line-height:1.4em}code{background:#f2f2f1;padding:1px 4px;overflow-wrap:break-word}h1 code{background:transparent}pre{background:#f8f8f8;border:0;border-top:1px solid #ccc;border-bottom:1px solid #ccc;margin:1em 0;padding:1ex}#http-server-module-list{display:flex;flex-flow:column}#http-server-module-list div{display:flex}#http-server-module-list dt{min-width:10%}#http-server-module-list p{margin-top:0}.toc ul,#index{list-style-type:none;margin:0;padding:0}#index code{background:transparent}#index h3{border-bottom:1px solid #ddd}#index ul{padding:0}#index h4{margin-top:.6em;font-weight:bold}@media (min-width:200ex){#index .two-column{column-count:2}}@media (min-width:300ex){#index .two-column{column-count:3}}dl{margin-bottom:2em}dl dl:last-child{margin-bottom:4em}dd{margin:0 0 1em 3em}#header-classes + dl > dd{margin-bottom:3em}dd dd{margin-left:2em}dd p{margin:10px 0}.name{background:#eee;font-weight:bold;font-size:.85em;padding:5px 10px;display:inline-block;min-width:40%}.name:hover{background:#e0e0e0}dt:target .name{background:var(--highlight-color)}.name > span:first-child{white-space:nowrap}.name.class > span:nth-child(2){margin-left:.4em}.inherited{color:#999;border-left:5px solid #eee;padding-left:1em}.inheritance em{font-style:normal;font-weight:bold}.desc h2{font-weight:400;font-size:1.25em}.desc h3{font-size:1em}.desc dt code{background:inherit}.source summary,.git-link-div{color:#666;text-align:right;font-weight:400;font-size:.8em;text-transform:uppercase}.source summary > *{white-space:nowrap;cursor:pointer}.git-link{color:inherit;margin-left:1em}.source pre{max-height:500px;overflow:auto;margin:0}.source pre code{font-size:12px;overflow:visible}.hlist{list-style:none}.hlist li{display:inline}.hlist li:after{content:',\2002'}.hlist li:last-child:after{content:none}.hlist .hlist{display:inline;padding-left:1em}img{max-width:100%}td{padding:0 .5em}.admonition{padding:.1em .5em;margin-bottom:1em}.admonition-title{font-weight:bold}.admonition.note,.admonition.info,.admonition.important{background:#aef}.admonition.todo,.admonition.versionadded,.admonition.tip,.admonition.hint{background:#dfd}.admonition.warning,.admonition.versionchanged,.admonition.deprecated{background:#fd4}.admonition.error,.admonition.danger,.admonition.caution{background:lightpink}</style>
+<style media="screen and (min-width: 700px)">@media screen and (min-width:700px){#sidebar{width:30%;height:100vh;overflow:auto;position:sticky;top:0}#content{width:70%;max-width:100ch;padding:3em 4em;border-left:1px solid #ddd}pre code{font-size:1em}.item .name{font-size:1em}main{display:flex;flex-direction:row-reverse;justify-content:flex-end}.toc ul ul,#index ul{padding-left:1.5em}.toc > ul > li{margin-top:.5em}}</style>
+<style media="print">@media print{#sidebar h1{page-break-before:always}.source{display:none}}@media print{*{background:transparent !important;color:#000 !important;box-shadow:none !important;text-shadow:none !important}a[href]:after{content:" (" attr(href) ")";font-size:90%}a[href][title]:after{content:none}abbr[title]:after{content:" (" attr(title) ")"}.ir a:after,a[href^="javascript:"]:after,a[href^="#"]:after{content:""}pre,blockquote{border:1px solid #999;page-break-inside:avoid}thead{display:table-header-group}tr,img{page-break-inside:avoid}img{max-width:100% !important}@page{margin:0.5cm}p,h2,h3{orphans:3;widows:3}h1,h2,h3,h4,h5,h6{page-break-after:avoid}}</style>
+<script defer src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/10.1.1/highlight.min.js" integrity="sha256-Uv3H6lx7dJmRfRvH8TH6kJD1TSK1aFcwgx+mdg3epi8=" crossorigin></script>
+<script>window.addEventListener('DOMContentLoaded', () => hljs.initHighlighting())</script>
+</head>
+<body>
+<main>
+<article id="content">
+<header>
+<h1 class="title">Module <code>optmagic.tests.simple_car_class</code></h1>
+</header>
+<section id="section-intro">
+<p>Script to test the functionality of the <code><a title="optmagic" href="../index.html">optmagic</a></code> module.</p>
+<p>Contains a simple example class that we want to later expose as a
+command line tool.</p>
+<p>Written by Lucas Sinclair.
+MIT Licensed.
+Contact at www.sinclair.bio</p>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">#!/usr/bin/env python3
+# -*- coding: utf-8 -*-
+
+&#34;&#34;&#34;
+Script to test the functionality of the `optmagic` module.
+
+Contains a simple example class that we want to later expose as a
+command line tool.
+
+Written by Lucas Sinclair.
+MIT Licensed.
+Contact at www.sinclair.bio
+&#34;&#34;&#34;
+
+# Built-in modules #
+import os
+
+# Constants #
+project_url = &#39;https://github.com/xapple/optmagic&#39;
+
+###############################################################################
+class Car:
+    &#34;&#34;&#34;
+    A simple car that has a name, a color, is automatic or manual and can be
+    a convertible. In addition it has a maximum speed, and can take the path
+    to a file to represent the registration document. Optionally, the car
+    can have a left-sided configuration for countries that drive on the other
+    side of the road.
+    &#34;&#34;&#34;
+
+    def __init__(self,
+                 name,
+                 color        = &#39;red&#39;,
+                 automatic    = True,
+                 convertible  = None,
+                 max_speed    = 60,
+                 registration = None,
+                 sided        = &#39;right&#39;,
+                 ):
+        &#34;&#34;&#34;
+        Args:
+
+            name: Lorem.
+
+            color: Lorem.
+
+            automatic: Determines if the car is automatic or not. This option
+                       can be either &#39;True&#39; or &#39;False&#39;.
+
+            convertible: Lorem.
+
+            max_speed: Lorem.
+
+            registration: Lorem.
+
+            sided: The side of the road on which the car is supposed to drive.
+                   Either &#39;left&#39; or &#39;right&#39;. No other options are supported.
+                   By default &#39;right&#39;.
+        &#34;&#34;&#34;
+        # Save attributes #
+        self.name         = name
+        self.color        = color
+        self.automatic    = automatic
+        self.convertible  = convertible
+        self.max_speed    = max_speed
+        self.registration = registration
+        self.sided        = sided
+        # Assign default values and change others #
+        self.transform()
+        # Validate attributes #
+        self.validate()
+
+    def transform(self):
+        &#34;&#34;&#34;
+        This method will replace empty attributes with defaults when this is
+        needed and will convert others to proper types.
+        &#34;&#34;&#34;
+        # The name should be lower case #
+        self.name = self.name.lower()
+        # If we don&#39;t know it&#39;s convertible we assume it&#39;s not #
+        if self.convertible is None:
+            self.convertible = False
+        # The speed should be an integer #
+        self.max_speed = int(self.max_speed)
+
+    def validate(self):
+        &#34;&#34;&#34;
+        This method will raise an Exception if any of the arguments passed by
+        the user are illegal.
+        &#34;&#34;&#34;
+        # Check color #
+        from matplotlib.colors import CSS4_COLORS as valid_colors
+        if self.color not in valid_colors:
+            msg = &#34;The color &#39;%s&#39; is not a valid color name.&#34;
+            raise Exception(msg % self.color)
+        # Check the automatic #
+        if self.automatic is not True and self.automatic is not False:
+            msg = &#34;The automatic property has to be True or False not &#39;%s&#39;.&#34;
+            raise ValueError(msg % self.automatic)
+        # Check the convertible #
+        if self.convertible is not True and self.convertible is not False:
+            msg = &#34;The convertible property has to be True or False not &#39;%s&#39;.&#34;
+            raise ValueError(msg % self.convertible)
+        # Check the maximum speed #
+        if not isinstance(self.max_speed, int):
+            msg = &#34;The maximum speed property has to be an integer not &#39;%s&#39;.&#34;
+            raise ValueError(msg % self.max_speed)
+        if self.max_speed &lt; 0:
+            raise ValueError(&#34;The maximum speed of the car cannot be negative.&#34;)
+        # Check the registration #
+        if self.registration is not None:
+            if not os.path.exists(self.registration):
+                msg = &#34;The file located at &#39;%s&#39; does not exist.&#34;
+                raise ValueError(msg % self.registration)
+        # Check the side #
+        if self.sided not in [&#39;left&#39;, &#39;right&#39;]:
+            msg = &#34;The sideness of the car is not &#39;right&#39; or &#39;left&#39;.&#34;
+            raise Exception(msg)
+
+    def __repr__(self):
+        return &#34;&lt;%s object &#39;%s&#39;&gt;&#34; % (self.__class__.__name__, self.name)
+
+    def __str__(self):
+        # Transmission #
+        transmission = &#39;automatic&#39; if self.automatic else &#39;manual&#39;
+        # First line #
+        msg = f&#34;This {transmission} {self.color} car is named {self.name}.\n&#34;
+        # Second line #
+        msg +=  f&#34;It can go up to {self.max_speed} km/h&#34;
+        if self.convertible: msg += &#34; and is a convertible.\n&#34;
+        else:                msg += &#34;.\n&#34;
+        # Third line #
+        if self.registration:
+            msg += f&#34;The registration is available at &#39;{self.registration}&#39;.\n&#34;
+        # Fourth line #
+        if self.sided == &#39;left&#39;:
+            msg += &#34;It drives on the left side of the road.\n&#34;
+        # Return #
+        return msg
+
+    def __call__(self, verbose=False):
+        if verbose: print(&#34;The verbose mode is activated.&#34;)
+        print(self)
+
+###############################################################################
+if __name__ == &#39;__main__&#39;:
+    car = Car(&#39;corvette&#39;)
+    car(verbose=True)</code></pre>
+</details>
+</section>
+<section>
+</section>
+<section>
+</section>
+<section>
+</section>
+<section>
+<h2 class="section-title" id="header-classes">Classes</h2>
+<dl>
+<dt id="optmagic.tests.simple_car_class.Car"><code class="flex name class">
+<span>class <span class="ident">Car</span></span>
+<span>(</span><span>name, color='red', automatic=True, convertible=None, max_speed=60, registration=None, sided='right')</span>
+</code></dt>
+<dd>
+<div class="desc"><p>A simple car that has a name, a color, is automatic or manual and can be
+a convertible. In addition it has a maximum speed, and can take the path
+to a file to represent the registration document. Optionally, the car
+can have a left-sided configuration for countries that drive on the other
+side of the road.</p>
+<h2 id="args">Args</h2>
+<dl>
+<dt><strong><code>name</code></strong></dt>
+<dd>Lorem.</dd>
+<dt><strong><code>color</code></strong></dt>
+<dd>Lorem.</dd>
+<dt><strong><code>automatic</code></strong></dt>
+<dd>Determines if the car is automatic or not. This option
+can be either 'True' or 'False'.</dd>
+<dt><strong><code>convertible</code></strong></dt>
+<dd>Lorem.</dd>
+<dt><strong><code>max_speed</code></strong></dt>
+<dd>Lorem.</dd>
+<dt><strong><code>registration</code></strong></dt>
+<dd>Lorem.</dd>
+<dt><strong><code>sided</code></strong></dt>
+<dd>The side of the road on which the car is supposed to drive.
+Either 'left' or 'right'. No other options are supported.
+By default 'right'.</dd>
+</dl></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">class Car:
+    &#34;&#34;&#34;
+    A simple car that has a name, a color, is automatic or manual and can be
+    a convertible. In addition it has a maximum speed, and can take the path
+    to a file to represent the registration document. Optionally, the car
+    can have a left-sided configuration for countries that drive on the other
+    side of the road.
+    &#34;&#34;&#34;
+
+    def __init__(self,
+                 name,
+                 color        = &#39;red&#39;,
+                 automatic    = True,
+                 convertible  = None,
+                 max_speed    = 60,
+                 registration = None,
+                 sided        = &#39;right&#39;,
+                 ):
+        &#34;&#34;&#34;
+        Args:
+
+            name: Lorem.
+
+            color: Lorem.
+
+            automatic: Determines if the car is automatic or not. This option
+                       can be either &#39;True&#39; or &#39;False&#39;.
+
+            convertible: Lorem.
+
+            max_speed: Lorem.
+
+            registration: Lorem.
+
+            sided: The side of the road on which the car is supposed to drive.
+                   Either &#39;left&#39; or &#39;right&#39;. No other options are supported.
+                   By default &#39;right&#39;.
+        &#34;&#34;&#34;
+        # Save attributes #
+        self.name         = name
+        self.color        = color
+        self.automatic    = automatic
+        self.convertible  = convertible
+        self.max_speed    = max_speed
+        self.registration = registration
+        self.sided        = sided
+        # Assign default values and change others #
+        self.transform()
+        # Validate attributes #
+        self.validate()
+
+    def transform(self):
+        &#34;&#34;&#34;
+        This method will replace empty attributes with defaults when this is
+        needed and will convert others to proper types.
+        &#34;&#34;&#34;
+        # The name should be lower case #
+        self.name = self.name.lower()
+        # If we don&#39;t know it&#39;s convertible we assume it&#39;s not #
+        if self.convertible is None:
+            self.convertible = False
+        # The speed should be an integer #
+        self.max_speed = int(self.max_speed)
+
+    def validate(self):
+        &#34;&#34;&#34;
+        This method will raise an Exception if any of the arguments passed by
+        the user are illegal.
+        &#34;&#34;&#34;
+        # Check color #
+        from matplotlib.colors import CSS4_COLORS as valid_colors
+        if self.color not in valid_colors:
+            msg = &#34;The color &#39;%s&#39; is not a valid color name.&#34;
+            raise Exception(msg % self.color)
+        # Check the automatic #
+        if self.automatic is not True and self.automatic is not False:
+            msg = &#34;The automatic property has to be True or False not &#39;%s&#39;.&#34;
+            raise ValueError(msg % self.automatic)
+        # Check the convertible #
+        if self.convertible is not True and self.convertible is not False:
+            msg = &#34;The convertible property has to be True or False not &#39;%s&#39;.&#34;
+            raise ValueError(msg % self.convertible)
+        # Check the maximum speed #
+        if not isinstance(self.max_speed, int):
+            msg = &#34;The maximum speed property has to be an integer not &#39;%s&#39;.&#34;
+            raise ValueError(msg % self.max_speed)
+        if self.max_speed &lt; 0:
+            raise ValueError(&#34;The maximum speed of the car cannot be negative.&#34;)
+        # Check the registration #
+        if self.registration is not None:
+            if not os.path.exists(self.registration):
+                msg = &#34;The file located at &#39;%s&#39; does not exist.&#34;
+                raise ValueError(msg % self.registration)
+        # Check the side #
+        if self.sided not in [&#39;left&#39;, &#39;right&#39;]:
+            msg = &#34;The sideness of the car is not &#39;right&#39; or &#39;left&#39;.&#34;
+            raise Exception(msg)
+
+    def __repr__(self):
+        return &#34;&lt;%s object &#39;%s&#39;&gt;&#34; % (self.__class__.__name__, self.name)
+
+    def __str__(self):
+        # Transmission #
+        transmission = &#39;automatic&#39; if self.automatic else &#39;manual&#39;
+        # First line #
+        msg = f&#34;This {transmission} {self.color} car is named {self.name}.\n&#34;
+        # Second line #
+        msg +=  f&#34;It can go up to {self.max_speed} km/h&#34;
+        if self.convertible: msg += &#34; and is a convertible.\n&#34;
+        else:                msg += &#34;.\n&#34;
+        # Third line #
+        if self.registration:
+            msg += f&#34;The registration is available at &#39;{self.registration}&#39;.\n&#34;
+        # Fourth line #
+        if self.sided == &#39;left&#39;:
+            msg += &#34;It drives on the left side of the road.\n&#34;
+        # Return #
+        return msg
+
+    def __call__(self, verbose=False):
+        if verbose: print(&#34;The verbose mode is activated.&#34;)
+        print(self)</code></pre>
+</details>
+<h3>Methods</h3>
+<dl>
+<dt id="optmagic.tests.simple_car_class.Car.transform"><code class="name flex">
+<span>def <span class="ident">transform</span></span>(<span>self)</span>
+</code></dt>
+<dd>
+<div class="desc"><p>This method will replace empty attributes with defaults when this is
+needed and will convert others to proper types.</p></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">def transform(self):
+    &#34;&#34;&#34;
+    This method will replace empty attributes with defaults when this is
+    needed and will convert others to proper types.
+    &#34;&#34;&#34;
+    # The name should be lower case #
+    self.name = self.name.lower()
+    # If we don&#39;t know it&#39;s convertible we assume it&#39;s not #
+    if self.convertible is None:
+        self.convertible = False
+    # The speed should be an integer #
+    self.max_speed = int(self.max_speed)</code></pre>
+</details>
+</dd>
+<dt id="optmagic.tests.simple_car_class.Car.validate"><code class="name flex">
+<span>def <span class="ident">validate</span></span>(<span>self)</span>
+</code></dt>
+<dd>
+<div class="desc"><p>This method will raise an Exception if any of the arguments passed by
+the user are illegal.</p></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">def validate(self):
+    &#34;&#34;&#34;
+    This method will raise an Exception if any of the arguments passed by
+    the user are illegal.
+    &#34;&#34;&#34;
+    # Check color #
+    from matplotlib.colors import CSS4_COLORS as valid_colors
+    if self.color not in valid_colors:
+        msg = &#34;The color &#39;%s&#39; is not a valid color name.&#34;
+        raise Exception(msg % self.color)
+    # Check the automatic #
+    if self.automatic is not True and self.automatic is not False:
+        msg = &#34;The automatic property has to be True or False not &#39;%s&#39;.&#34;
+        raise ValueError(msg % self.automatic)
+    # Check the convertible #
+    if self.convertible is not True and self.convertible is not False:
+        msg = &#34;The convertible property has to be True or False not &#39;%s&#39;.&#34;
+        raise ValueError(msg % self.convertible)
+    # Check the maximum speed #
+    if not isinstance(self.max_speed, int):
+        msg = &#34;The maximum speed property has to be an integer not &#39;%s&#39;.&#34;
+        raise ValueError(msg % self.max_speed)
+    if self.max_speed &lt; 0:
+        raise ValueError(&#34;The maximum speed of the car cannot be negative.&#34;)
+    # Check the registration #
+    if self.registration is not None:
+        if not os.path.exists(self.registration):
+            msg = &#34;The file located at &#39;%s&#39; does not exist.&#34;
+            raise ValueError(msg % self.registration)
+    # Check the side #
+    if self.sided not in [&#39;left&#39;, &#39;right&#39;]:
+        msg = &#34;The sideness of the car is not &#39;right&#39; or &#39;left&#39;.&#34;
+        raise Exception(msg)</code></pre>
+</details>
+</dd>
+</dl>
+</dd>
+</dl>
+</section>
+</article>
+<nav id="sidebar">
+<h1>Index</h1>
+<div class="toc">
+<ul></ul>
+</div>
+<ul id="index">
+<li><h3>Super-module</h3>
+<ul>
+<li><code><a title="optmagic.tests" href="index.html">optmagic.tests</a></code></li>
+</ul>
+</li>
+<li><h3><a href="#header-classes">Classes</a></h3>
+<ul>
+<li>
+<h4><code><a title="optmagic.tests.simple_car_class.Car" href="#optmagic.tests.simple_car_class.Car">Car</a></code></h4>
+<ul class="">
+<li><code><a title="optmagic.tests.simple_car_class.Car.transform" href="#optmagic.tests.simple_car_class.Car.transform">transform</a></code></li>
+<li><code><a title="optmagic.tests.simple_car_class.Car.validate" href="#optmagic.tests.simple_car_class.Car.validate">validate</a></code></li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+</nav>
+</main>
+<footer id="footer">
+<p>Generated by <a href="https://pdoc3.github.io/pdoc"><cite>pdoc</cite> 0.9.2</a>.</p>
+</footer>
+</body>
+</html>

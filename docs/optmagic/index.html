@@ -41,18 +41,19 @@ Contact at www.sinclair.bio
 &#34;&#34;&#34;
 
 # Constants #
-__version__ = &#39;1.0.2&#39;
+__version__ = &#39;1.0.3&#39;
 
 # Built-in modules #
 import sys, argparse, types, inspect, functools, os.path
 
 # Internal modules #
 from optmagic.argument import Argument
+from optmagic.pytest_action import PytestAction
 
 # Third party modules #
 import docstring_parser
 
-################################################################################
+###############################################################################
 class OptMagic:
     &#34;&#34;&#34;
     This class enables you to create simple command line interfaces starting
@@ -143,6 +144,11 @@ class OptMagic:
         return __import__(name)
 
     @functools.cached_property
+    def base_path(self):
+        &#34;&#34;&#34;The location of the package on the filesystem.&#34;&#34;&#34;
+        return os.path.dirname(inspect.getfile(self.base_module)) + &#39;/&#39;
+
+    @functools.cached_property
     def prog_string(self):
         &#34;&#34;&#34;
         This is the name of program that appears at the top of the help string.
@@ -222,7 +228,6 @@ class OptMagic:
                     add_help        = False,
                     formatter_class = RawTextHelpFormatter)
 
-
     @functools.cached_property
     def parser(self):
         # Create the parser #
@@ -246,6 +251,10 @@ class OptMagic:
         parser.add_argument(&#39;--help&#39;, &#39;-h&#39;, action=&#39;help&#39;,
                             default=argparse.SUPPRESS,
                             help=&#39;Show this help message and exit.&#39;)
+        # Add the pytest argument #
+        parser.add_argument(&#39;--pytest&#39;, action=PytestAction,
+                            help=&#39;Run the test suite and exit.&#39;,
+                            default=self.base_path)
         # Return #
         return parser
 
@@ -322,6 +331,16 @@ if __name__ == &#39;__main__&#39;:
 <div class="desc"><p>Written by Lucas Sinclair.
 MIT Licensed.
 Contact at www.sinclair.bio</p></div>
+</dd>
+<dt><code class="name"><a title="optmagic.pytest_action" href="pytest_action.html">optmagic.pytest_action</a></code></dt>
+<dd>
+<div class="desc"><p>Written by Lucas Sinclair.
+MIT Licensed.
+Contact at www.sinclair.bio</p></div>
+</dd>
+<dt><code class="name"><a title="optmagic.tests" href="tests/index.html">optmagic.tests</a></code></dt>
+<dd>
+<div class="desc"></div>
 </dd>
 </dl>
 </section>
@@ -445,6 +464,11 @@ ignored.</p></div>
         return __import__(name)
 
     @functools.cached_property
+    def base_path(self):
+        &#34;&#34;&#34;The location of the package on the filesystem.&#34;&#34;&#34;
+        return os.path.dirname(inspect.getfile(self.base_module)) + &#39;/&#39;
+
+    @functools.cached_property
     def prog_string(self):
         &#34;&#34;&#34;
         This is the name of program that appears at the top of the help string.
@@ -524,7 +548,6 @@ ignored.</p></div>
                     add_help        = False,
                     formatter_class = RawTextHelpFormatter)
 
-
     @functools.cached_property
     def parser(self):
         # Create the parser #
@@ -548,6 +571,10 @@ ignored.</p></div>
         parser.add_argument(&#39;--help&#39;, &#39;-h&#39;, action=&#39;help&#39;,
                             default=argparse.SUPPRESS,
                             help=&#39;Show this help message and exit.&#39;)
+        # Add the pytest argument #
+        parser.add_argument(&#39;--pytest&#39;, action=PytestAction,
+                            help=&#39;Run the test suite and exit.&#39;,
+                            default=self.base_path)
         # Return #
         return parser
 
@@ -629,6 +656,45 @@ ignored.</p></div>
 <dt id="optmagic.OptMagic.base_module"><code class="name">var <span class="ident">base_module</span></code></dt>
 <dd>
 <div class="desc"><p>The parent package from which the object is coming from.</p></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">def __get__(self, instance, owner=None):
+    if instance is None:
+        return self
+    if self.attrname is None:
+        raise TypeError(
+            &#34;Cannot use cached_property instance without calling __set_name__ on it.&#34;)
+    try:
+        cache = instance.__dict__
+    except AttributeError:  # not all objects have __dict__ (e.g. class defines slots)
+        msg = (
+            f&#34;No &#39;__dict__&#39; attribute on {type(instance).__name__!r} &#34;
+            f&#34;instance to cache {self.attrname!r} property.&#34;
+        )
+        raise TypeError(msg) from None
+    val = cache.get(self.attrname, _NOT_FOUND)
+    if val is _NOT_FOUND:
+        with self.lock:
+            # check if another thread filled cache while we awaited lock
+            val = cache.get(self.attrname, _NOT_FOUND)
+            if val is _NOT_FOUND:
+                val = self.func(instance)
+                try:
+                    cache[self.attrname] = val
+                except TypeError:
+                    msg = (
+                        f&#34;The &#39;__dict__&#39; attribute on {type(instance).__name__!r} instance &#34;
+                        f&#34;does not support item assignment for caching {self.attrname!r} property.&#34;
+                    )
+                    raise TypeError(msg) from None
+    return val</code></pre>
+</details>
+</dd>
+<dt id="optmagic.OptMagic.base_path"><code class="name">var <span class="ident">base_path</span></code></dt>
+<dd>
+<div class="desc"><p>The location of the package on the filesystem.</p></div>
 <details class="source">
 <summary>
 <span>Expand source code</span>
@@ -1312,6 +1378,8 @@ top of the help string and summarizes all options.</p></div>
 <li><h3><a href="#header-submodules">Sub-modules</a></h3>
 <ul>
 <li><code><a title="optmagic.argument" href="argument.html">optmagic.argument</a></code></li>
+<li><code><a title="optmagic.pytest_action" href="pytest_action.html">optmagic.pytest_action</a></code></li>
+<li><code><a title="optmagic.tests" href="tests/index.html">optmagic.tests</a></code></li>
 </ul>
 </li>
 <li><h3><a href="#header-classes">Classes</a></h3>
@@ -1321,6 +1389,7 @@ top of the help string and summarizes all options.</p></div>
 <ul class="two-column">
 <li><code><a title="optmagic.OptMagic.arguments" href="#optmagic.OptMagic.arguments">arguments</a></code></li>
 <li><code><a title="optmagic.OptMagic.base_module" href="#optmagic.OptMagic.base_module">base_module</a></code></li>
+<li><code><a title="optmagic.OptMagic.base_path" href="#optmagic.OptMagic.base_path">base_path</a></code></li>
 <li><code><a title="optmagic.OptMagic.child_module" href="#optmagic.OptMagic.child_module">child_module</a></code></li>
 <li><code><a title="optmagic.OptMagic.docstring" href="#optmagic.OptMagic.docstring">docstring</a></code></li>
 <li><code><a title="optmagic.OptMagic.epilog_string" href="#optmagic.OptMagic.epilog_string">epilog_string</a></code></li>
