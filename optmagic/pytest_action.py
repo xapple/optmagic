@@ -8,7 +8,7 @@ Contact at www.sinclair.bio
 """
 
 # Built-in modules #
-import argparse
+import os, argparse
 
 ###############################################################################
 class PytestAction(argparse.Action):
@@ -26,8 +26,13 @@ class PytestAction(argparse.Action):
     def __call__(self, parser, namespace, values, option_string=None):
         # Import #
         import pytest
+        # Can't end with a slash #
+        self.default = self.default.rstrip('/')
         # Where are the tests #
-        test_dir = self.default + 'tests'
+        if os.path.basename(self.default) == 'tests':
+            test_dir = self.default
+        else:
+            test_dir = self.default + '/tests'
         # Run #
         exit_code = pytest.main([test_dir])
         # Exit cleanly #
