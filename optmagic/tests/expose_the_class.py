@@ -20,7 +20,7 @@ Call it like this:
 from optmagic import OptMagic
 
 # Test class #
-from simple_car_class import Car
+from .simple_car_class import Car
 
 # Apply magic #
 if __name__ == '__main__': OptMagic(Car)()

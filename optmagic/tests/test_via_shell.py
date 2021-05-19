@@ -18,18 +18,15 @@ Call it like this:
 # Built-in modules #
 import os, inspect
 
-# Third party modules #
-import pbs3
-
 # Constants #
 file_name = inspect.getframeinfo(inspect.currentframe()).filename
 this_dir  = os.path.dirname(os.path.abspath(file_name)) + '/'
 
-# Create the command #
-cmd = pbs3.Command(this_dir + 'expose_the_class.py')
-
 ###############################################################################
 def test_simple_case():
+    # Create the command #
+    import pbs3
+    cmd = pbs3.Command(this_dir + 'expose_the_class.py')
     # Call the command #
     output = cmd('--name=corvette')
     # What we expect #
