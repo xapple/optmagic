@@ -3,7 +3,7 @@
 
 """
 Written by Lucas Sinclair.
-GNUv3 Licensed.
+MIT Licensed.
 Contact at www.sinclair.bio
 """
 
