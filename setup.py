@@ -19,7 +19,7 @@ with open(readme_path, encoding='utf-8') as handle: readme = handle.read()
 # Call setup #
 setup(
     name             = 'optmagic',
-    version          = '1.0.8',
+    version          = '1.0.9',
     description      = 'Automatically make a command line interface from a '
                        'python class or function.',
     license          = 'MIT',
