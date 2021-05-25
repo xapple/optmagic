@@ -46,15 +46,15 @@ import inspect, functools, re
 ###############################################################################
 class Argument:
 
-    def __init__(self, name, default, desc, optmagic):
+    def __init__(self, optmagic, name, default, desc):
+        # A reference to the parent object #
+        self.optmagic = optmagic
         # The python variable name #
         self.name = name
         # The default value #
         self.default = default
         # The description of this argument in the docstring #
         self.desc = desc
-        # A reference to the parent object #
-        self.optmagic = optmagic
         # An attribute to check if a value is cached #
         self.letter_chosen = False
 
@@ -154,7 +154,7 @@ class Argument:
         # is &#34;the&#34;.
         if words[0].lower() == &#34;the&#34;:
             metavar = words[1].upper()
-        # Some names can be abbriviated #
+        # Some names can be abbreviated #
         if metavar == &#34;NUMBER&#34;:    metavar = &#34;NUM&#34;
         if metavar == &#34;DIRECTORY&#34;: metavar = &#34;DIR&#34;
         # Return #
@@ -178,8 +178,11 @@ class Argument:
     #------------------------------- Methods ---------------------------------#
     def add_arg(self, parser, required):
         &#34;&#34;&#34;Add this argument to the argparse parser.&#34;&#34;&#34;
+        # We should add it to the default group in most cases #
         if self.has_default: group = parser
-        else:                group = required
+        # If we don&#39;t have a default value we add it to the required group #
+        else: group = required
+        # Call method with all arguments #
         return group.add_argument(&#39;--&#39; + self.name,
                                   &#39;-&#39; + self.short_letter,
                                   **self.kwargs)</code></pre>
@@ -196,7 +199,7 @@ class Argument:
 <dl>
 <dt id="optmagic.argument.Argument"><code class="flex name class">
 <span>class <span class="ident">Argument</span></span>
-<span>(</span><span>name, default, desc, optmagic)</span>
+<span>(</span><span>optmagic, name, default, desc)</span>
 </code></dt>
 <dd>
 <div class="desc"></div>
@@ -206,15 +209,15 @@ class Argument:
 </summary>
 <pre><code class="python">class Argument:
 
-    def __init__(self, name, default, desc, optmagic):
+    def __init__(self, optmagic, name, default, desc):
+        # A reference to the parent object #
+        self.optmagic = optmagic
         # The python variable name #
         self.name = name
         # The default value #
         self.default = default
         # The description of this argument in the docstring #
         self.desc = desc
-        # A reference to the parent object #
-        self.optmagic = optmagic
         # An attribute to check if a value is cached #
         self.letter_chosen = False
 
@@ -314,7 +317,7 @@ class Argument:
         # is &#34;the&#34;.
         if words[0].lower() == &#34;the&#34;:
             metavar = words[1].upper()
-        # Some names can be abbriviated #
+        # Some names can be abbreviated #
         if metavar == &#34;NUMBER&#34;:    metavar = &#34;NUM&#34;
         if metavar == &#34;DIRECTORY&#34;: metavar = &#34;DIR&#34;
         # Return #
@@ -338,8 +341,11 @@ class Argument:
     #------------------------------- Methods ---------------------------------#
     def add_arg(self, parser, required):
         &#34;&#34;&#34;Add this argument to the argparse parser.&#34;&#34;&#34;
+        # We should add it to the default group in most cases #
         if self.has_default: group = parser
-        else:                group = required
+        # If we don&#39;t have a default value we add it to the required group #
+        else: group = required
+        # Call method with all arguments #
         return group.add_argument(&#39;--&#39; + self.name,
                                   &#39;-&#39; + self.short_letter,
                                   **self.kwargs)</code></pre>
@@ -680,8 +686,11 @@ type=int).</p></div>
 </summary>
 <pre><code class="python">def add_arg(self, parser, required):
     &#34;&#34;&#34;Add this argument to the argparse parser.&#34;&#34;&#34;
+    # We should add it to the default group in most cases #
     if self.has_default: group = parser
-    else:                group = required
+    # If we don&#39;t have a default value we add it to the required group #
+    else: group = required
+    # Call method with all arguments #
     return group.add_argument(&#39;--&#39; + self.name,
                               &#39;-&#39; + self.short_letter,
                               **self.kwargs)</code></pre>
