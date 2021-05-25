@@ -51,7 +51,7 @@ class OptMagic:
     #----------------------------- Properties --------------------------------#
     @functools.cached_property
     def type(self):
-        # Determine the type of the attribute #
+        # Determine the type of the object to expose #
         if isinstance(self.obj, type):                 return 'class'
         elif isinstance(self.obj, types.FunctionType): return 'function'
         # Otherwise raise an exception #
@@ -81,7 +81,7 @@ class OptMagic:
     @functools.cached_property
     def sub_docs(self):
         """
-        The `docstring_parser` module is able to parse numpydoc style
+        The `docstring_parser` module is able to parse 'numpydoc' style
         docstrings amongst others formats.
         """
         return {param.arg_name: param.description
@@ -90,10 +90,10 @@ class OptMagic:
     @functools.cached_property
     def arguments(self):
         # Create all Argument objects #
-        result = [Argument(param.name,
-                         param.default,
-                         self.sub_docs[param.name],
-                         self)
+        result = [Argument(self,
+                           param.name,
+                           param.default,
+                           self.sub_docs[param.name])
                   for param in self.sig.parameters.values()]
         # Return #
         return result
@@ -133,6 +133,14 @@ class OptMagic:
         return None
 
     @functools.cached_property
+    def title_string(self):
+        """
+        A string that appears at the top of the help message.
+        Just after the usage summary.
+        """
+        return self.base_module.__doc__
+
+    @functools.cached_property
     def epilog_string(self):
         """
         This is an extra string that appears at the very end of the help
@@ -157,14 +165,6 @@ class OptMagic:
             return msg
 
     @functools.cached_property
-    def title_string(self):
-        """
-        A string that appears at the top of the help message.
-        Just after the usage summary.
-        """
-        return self.base_module.__doc__
-
-    @functools.cached_property
     def version_string(self):
         """The string returned when invoked with the '-v' option"""
         # Initialize #
@@ -181,7 +181,7 @@ class OptMagic:
     @functools.cached_property
     def options(self):
         """
-        A better formatter class could be constructed based on:
+        An even better formatter class could be constructed based on:
         https://stackoverflow.com/a/65891304
         """
         # Formatter #
@@ -201,24 +201,24 @@ class OptMagic:
         parser = argparse.ArgumentParser(**self.options)
         # Capitalize groups #
         parser._positionals.title = 'Positional arguments'
-        parser._optionals.title = 'Optional arguments'
+        parser._optionals.title   = 'Optional arguments'
         # Add a special group for required arguments #
         # See https://stackoverflow.com/questions/24180527
-        if [arg.has_default for arg in self.arguments]:
+        if any([not arg.has_default for arg in self.arguments]):
             required = parser.add_argument_group('Required arguments')
         else:
             required = None
-        # Iterate over arguments #
+        # Iterate over arguments and offer up both groups #
         for arg in self.arguments: arg.add_arg(parser, required)
-        # Add the version argument #
+        # Add the version action #
         parser.add_argument('--version', '-v', action='version',
                             version=self.version_string,
                             help="Show program's version number and exit.")
-        # Add the help argument #
+        # Add the help action #
         parser.add_argument('--help', '-h', action='help',
                             default=argparse.SUPPRESS,
                             help='Show this help message and exit.')
-        # Add the pytest argument #
+        # Add the pytest action #
         parser.add_argument('--pytest', action=PytestAction,
                             help='Run the test suite and exit.',
                             default=self.base_path)
@@ -232,7 +232,7 @@ class OptMagic:
             import shlex
             argument_list = shlex.split(self.optmagic_argv)
             return self.parser.parse_args(argument_list)
-        # Call the parser #
+        # Otherwise call the parser normally #
         return self.parser.parse_args()
 
     @functools.cached_property
@@ -253,22 +253,26 @@ class OptMagic:
     @functools.cached_property
     def markdown(self):
         """
+        #TODO
         Return a markdown version of the help string.
-        This actually creates a file somewhere on the filesystem!
+        Beware, this actually creates a file somewhere on the filesystem!
         """
         import argmark
         return argmark.md_help(self.parser)
 
 ###############################################################################
 # The code below is used for debugging purposes
-# It uses the test case found in the 'test/' directory
+# It uses the test case found in the 'test/' directory.
 
 # You can call it like this:
 #   $ python3 -m optmagic --name=hello
+#
 # Or via ipython for interactiveness:
-#   $ ipython3 -i -- optmagic.py --name hello
+#   $ ipython3 -i -- __init__.py --name hello
+#
 # Or via the executable:
 #   $ test/expose_the_class.py -n hello --max_speed 130
+#
 # Or inside ipython with these commands:
 #    from optmagic import OptMagic; from simple_car_class import Car;
 #    self = OptMagic(Car); self.optmagic_argv = "--name=hello"; self()

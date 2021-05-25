@@ -3,9 +3,9 @@
 # `optmagic` version 1.0.7
 
 This project enables you to create simple command line interfaces starting
-with a class, or a function that you want to expose directly to the shell.
+with a python class, or a python function that you want to expose directly to the shell.
 
-It contains functionality which has not yet all been fully documented.
+It contains functionality which has not yet all been fully documented. Stay tuned.
 
 ## Similar projects
 
@@ -16,25 +16,27 @@ It contains functionality which has not yet all been fully documented.
 
 ### Why not use one of those?
 
-The programmer should not have to specify anything extra than what the class or function already contains to expose its functionality.
+Ideally, the programmer should not have to specify anything extra than what the class or function already contains to expose its functionality. None of these other packages strive to accomplish that goal like `optmagic` does, as you can see in the following comparative examples.
+
+    TODO
 
 ## Demo 
 
-TODO
+    TODO
 
 ## Installing
 
-To install the `optmagic` package, simply type the following commands on your terminal:
+To install the `optmagic` package, simply type the following command on your terminal:
 
     $ pip3 install optmagic
 
 ## Dependencies
 
-The projects depends on the following module for parsing docstrings:
+The project depends on the following module for parsing the docstrings automatically:
 
 * `docstring_parser`
 
-If you want to run the test suite for `optmagic` you need the following extra libraries:
+If you want to run the test suite for `optmagic` you will also need the following extra libraries:
 
 * `pytest`
 * `matplotlib`

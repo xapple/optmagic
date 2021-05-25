@@ -13,15 +13,15 @@ import inspect, functools, re
 ###############################################################################
 class Argument:
 
-    def __init__(self, name, default, desc, optmagic):
+    def __init__(self, optmagic, name, default, desc):
+        # A reference to the parent object #
+        self.optmagic = optmagic
         # The python variable name #
         self.name = name
         # The default value #
         self.default = default
         # The description of this argument in the docstring #
         self.desc = desc
-        # A reference to the parent object #
-        self.optmagic = optmagic
         # An attribute to check if a value is cached #
         self.letter_chosen = False
 
@@ -121,7 +121,7 @@ class Argument:
         # is "the".
         if words[0].lower() == "the":
             metavar = words[1].upper()
-        # Some names can be abbriviated #
+        # Some names can be abbreviated #
         if metavar == "NUMBER":    metavar = "NUM"
         if metavar == "DIRECTORY": metavar = "DIR"
         # Return #
@@ -145,8 +145,11 @@ class Argument:
     #------------------------------- Methods ---------------------------------#
     def add_arg(self, parser, required):
         """Add this argument to the argparse parser."""
+        # We should add it to the default group in most cases #
         if self.has_default: group = parser
-        else:                group = required
+        # If we don't have a default value we add it to the required group #
+        else: group = required
+        # Call method with all arguments #
         return group.add_argument('--' + self.name,
                                   '-' + self.short_letter,
                                   **self.kwargs)

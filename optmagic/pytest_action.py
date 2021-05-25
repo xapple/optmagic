@@ -12,6 +12,9 @@ import os, argparse
 
 ###############################################################################
 class PytestAction(argparse.Action):
+    """
+    The module base directory should be passed in with `default`
+    """
 
     def __init__(self, option_strings, dest, **kwargs):
         # Call the parent class constructor #
@@ -26,7 +29,7 @@ class PytestAction(argparse.Action):
     def __call__(self, parser, namespace, values, option_string=None):
         # Import #
         import pytest
-        # Can't end with a slash #
+        # The module directory can't end with a slash #
         self.default = self.default.rstrip('/')
         # Where are the tests #
         if os.path.basename(self.default) == 'tests':

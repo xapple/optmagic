@@ -21,7 +21,7 @@ setup(
     name             = 'optmagic',
     version          = '1.0.7',
     description      = 'Automatically make a command line interface from a '
-                       'class or function.',
+                       'python class or function.',
     license          = 'MIT',
     url              = 'http://github.com/xapple/optmagic/',
     author           = 'Lucas Sinclair',
