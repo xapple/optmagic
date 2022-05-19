@@ -89,7 +89,14 @@ class Argument:
         """
         Example:
         parser.add_argument('throw', choices=['rock', 'paper', 'scissors']).
+
+        This needs fixing and currently doesn't work well. For instance
+        when there are three options it detects only two:
+
+            (choose from 'rock`, `paper', 'scissors')
         """
+        # TODO #
+        return None
         # Initialize #
         choices = None
         # Detect cases where there are only two choices #

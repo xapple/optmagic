@@ -38,7 +38,7 @@ class OptMagic:
 
         Other:
 
-            For debugging you can set the special attribute `optmagic_argv`
+            For debugging, you can set the special attribute `optmagic_argv`
             to a string of your choosing which will cause sys.argv to be
             ignored.
         """
@@ -54,7 +54,7 @@ class OptMagic:
         # Determine the type of the object to expose #
         if isinstance(self.obj, type):                 return 'class'
         elif isinstance(self.obj, types.FunctionType): return 'function'
-        # Otherwise raise an exception #
+        # Otherwise, raise an exception #
         else:
             msg = "OptMagic should be called with a function or a class but" \
                   " not with `%s`." % self.obj
@@ -232,7 +232,7 @@ class OptMagic:
             import shlex
             argument_list = shlex.split(self.optmagic_argv)
             return self.parser.parse_args(argument_list)
-        # Otherwise call the parser normally #
+        # Otherwise, call the parser normally #
         return self.parser.parse_args()
 
     @functools.cached_property
