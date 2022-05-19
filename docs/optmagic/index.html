@@ -41,7 +41,7 @@ Contact at www.sinclair.bio
 &#34;&#34;&#34;
 
 # Constants #
-__version__ = &#39;1.0.8&#39;
+__version__ = &#39;1.1.0&#39;
 
 # Built-in modules #
 import sys, argparse, types, inspect, functools, os.path
@@ -71,7 +71,7 @@ class OptMagic:
 
         Other:
 
-            For debugging you can set the special attribute `optmagic_argv`
+            For debugging, you can set the special attribute `optmagic_argv`
             to a string of your choosing which will cause sys.argv to be
             ignored.
         &#34;&#34;&#34;
@@ -87,7 +87,7 @@ class OptMagic:
         # Determine the type of the object to expose #
         if isinstance(self.obj, type):                 return &#39;class&#39;
         elif isinstance(self.obj, types.FunctionType): return &#39;function&#39;
-        # Otherwise raise an exception #
+        # Otherwise, raise an exception #
         else:
             msg = &#34;OptMagic should be called with a function or a class but&#34; \
                   &#34; not with `%s`.&#34; % self.obj
@@ -265,7 +265,7 @@ class OptMagic:
             import shlex
             argument_list = shlex.split(self.optmagic_argv)
             return self.parser.parse_args(argument_list)
-        # Otherwise call the parser normally #
+        # Otherwise, call the parser normally #
         return self.parser.parse_args()
 
     @functools.cached_property
@@ -371,7 +371,7 @@ This project is similar in some ways to <a href="https://www.pyinvoke.org/">http
 object as the only parameter to OptMagic.</dd>
 </dl>
 <h2 id="other">Other</h2>
-<p>For debugging you can set the special attribute <code>optmagic_argv</code>
+<p>For debugging, you can set the special attribute <code>optmagic_argv</code>
 to a string of your choosing which will cause sys.argv to be
 ignored.</p></div>
 <details class="source">
@@ -395,7 +395,7 @@ ignored.</p></div>
 
         Other:
 
-            For debugging you can set the special attribute `optmagic_argv`
+            For debugging, you can set the special attribute `optmagic_argv`
             to a string of your choosing which will cause sys.argv to be
             ignored.
         &#34;&#34;&#34;
@@ -411,7 +411,7 @@ ignored.</p></div>
         # Determine the type of the object to expose #
         if isinstance(self.obj, type):                 return &#39;class&#39;
         elif isinstance(self.obj, types.FunctionType): return &#39;function&#39;
-        # Otherwise raise an exception #
+        # Otherwise, raise an exception #
         else:
             msg = &#34;OptMagic should be called with a function or a class but&#34; \
                   &#34; not with `%s`.&#34; % self.obj
@@ -589,7 +589,7 @@ ignored.</p></div>
             import shlex
             argument_list = shlex.split(self.optmagic_argv)
             return self.parser.parse_args(argument_list)
-        # Otherwise call the parser normally #
+        # Otherwise, call the parser normally #
         return self.parser.parse_args()
 
     @functools.cached_property

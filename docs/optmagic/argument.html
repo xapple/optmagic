@@ -122,7 +122,14 @@ class Argument:
         &#34;&#34;&#34;
         Example:
         parser.add_argument(&#39;throw&#39;, choices=[&#39;rock&#39;, &#39;paper&#39;, &#39;scissors&#39;]).
+
+        This needs fixing and currently doesn&#39;t work well. For instance
+        when there are three options it detects only two:
+
+            (choose from &#39;rock`, `paper&#39;, &#39;scissors&#39;)
         &#34;&#34;&#34;
+        # TODO #
+        return None
         # Initialize #
         choices = None
         # Detect cases where there are only two choices #
@@ -285,7 +292,14 @@ class Argument:
         &#34;&#34;&#34;
         Example:
         parser.add_argument(&#39;throw&#39;, choices=[&#39;rock&#39;, &#39;paper&#39;, &#39;scissors&#39;]).
+
+        This needs fixing and currently doesn&#39;t work well. For instance
+        when there are three options it detects only two:
+
+            (choose from &#39;rock`, `paper&#39;, &#39;scissors&#39;)
         &#34;&#34;&#34;
+        # TODO #
+        return None
         # Initialize #
         choices = None
         # Detect cases where there are only two choices #
@@ -355,7 +369,11 @@ class Argument:
 <dt id="optmagic.argument.Argument.choices"><code class="name">var <span class="ident">choices</span></code></dt>
 <dd>
 <div class="desc"><p>Example:
-parser.add_argument('throw', choices=['rock', 'paper', 'scissors']).</p></div>
+parser.add_argument('throw', choices=['rock', 'paper', 'scissors']).</p>
+<p>This needs fixing and currently doesn't work well. For instance
+when there are three options it detects only two:</p>
+<pre><code>(choose from 'rock&lt;code&gt;, &lt;/code&gt;paper', 'scissors')
+</code></pre></div>
 <details class="source">
 <summary>
 <span>Expand source code</span>
