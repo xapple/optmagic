@@ -22,7 +22,7 @@ project_url = 'https://github.com/xapple/optmagic'
 class Car:
     """
     A simple car that has a name, a color, is automatic or manual and can be
-    a convertible. In addition, it has a maximum speed, and can take the path
+    a convertible. In addition, it has a maximum speed and can take the path
     to a file to represent the registration document. Optionally, the car
     can have a left-sided configuration for countries that drive on the other
     side of the road.
@@ -89,8 +89,7 @@ class Car:
         the user are illegal.
         """
         # Check color #
-        from matplotlib.colors import CSS4_COLORS as valid_colors
-        if self.color not in valid_colors:
+        if self.color not in ('red', 'green', 'blue', 'yellow'):
             msg = "The color '%s' is not a valid color name."
             raise Exception(msg % self.color)
         # Check the automatic #
