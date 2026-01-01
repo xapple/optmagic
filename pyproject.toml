@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "optmagic"
-version = "1.1.0"
+version = "1.1.1"
 
 description = "Automatically make a command line interface from a python class or function."
 readme = { file = "README.md", content-type = "text/markdown" }

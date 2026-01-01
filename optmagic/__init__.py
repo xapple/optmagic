@@ -8,7 +8,7 @@ Contact at www.sinclair.bio
 """
 
 # Constants #
-__version__ = '1.1.0'
+__version__ = '1.1.1'
 
 # Built-in modules #
 import sys, argparse, types, inspect, functools, os.path
