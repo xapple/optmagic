@@ -1,0 +1,30 @@
+[build-system]
+requires = ["setuptools>=61.0"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "optmagic"
+version = "1.1.0"
+
+description = "Automatically make a command line interface from a python class or function."
+readme = { file = "README.md", content-type = "text/markdown" }
+license = { file = "LICENSE.txt" }
+requires-python = ">=3.8"
+
+authors = [
+  { name = "Lucas Sinclair", email = "lucas.sinclair@me.com" },
+]
+
+dependencies = ["docstring_parser"]
+
+[project.optional-dependencies]
+tests = ["pytest"]
+
+[project.urls]
+Homepage = "http://github.com/xapple/optmagic/"
+
+[tool.setuptools]
+include-package-data = true
+
+[tool.setuptools.packages.find]
+exclude = ["optmagic.tests*"]
