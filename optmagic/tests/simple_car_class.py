@@ -22,7 +22,7 @@ project_url = 'https://github.com/xapple/optmagic'
 class Car:
     """
     A simple car that has a name, a color, is automatic or manual and can be
-    a convertible. In addition it has a maximum speed, and can take the path
+    a convertible. In addition, it has a maximum speed, and can take the path
     to a file to represent the registration document. Optionally, the car
     can have a left-sided configuration for countries that drive on the other
     side of the road.
@@ -75,7 +75,7 @@ class Car:
         This method will replace empty attributes with defaults when this is
         needed and will convert others to proper types.
         """
-        # The name should be lower case #
+        # The name should be lower-case #
         self.name = self.name.lower()
         # If we don't know it's convertible we assume it's not #
         if self.convertible is None:
